@@ -53,12 +53,10 @@ dsh plugin --profile web add "$PWD"
 
 ### From a release asset
 
-Once the release workflow is activated (see [Build and release](#build-and-release-on-github-by-default)),
-tag a version with a workflow-scoped credential and download
-`ban-sky-dsh-workbuddy-*.tgz` from the created GitHub Release:
+Download the latest `ban-sky-dsh-workbuddy-*.tgz` (and its `.sha256`) from
+[GitHub Releases](https://github.com/ban-sky/dsh-workbuddy/releases):
 
 ```sh
-git tag v0.1.1 && git push origin v0.1.1
 dsh plugin --profile web add /path/to/ban-sky-dsh-workbuddy-0.1.1.tgz
 ```
 
@@ -166,16 +164,12 @@ Test layout:
 
 ## Build and release (on GitHub by default)
 
-- [`ci/github-workflows/ci.yml`](./ci/github-workflows/ci.yml) — tests and builds on Node 22 and 24 for every push / PR, and uploads the tarball artifacts;
-- [`ci/github-workflows/release.yml`](./ci/github-workflows/release.yml) — on a `v*` tag, re-tests, builds, and attaches the tarball plus SHA-256 to a GitHub Release.
+- [`.github/workflows/ci.yml`](./.github/workflows/ci.yml) — tests and builds on Node 22 and 24 for every push / PR, and uploads the tarball artifacts;
+- [`.github/workflows/release.yml`](./.github/workflows/release.yml) — on a `v*` tag, re-tests, builds, and attaches the tarball plus SHA-256 to a GitHub Release.
 
 There is no need to commit `dist/`; GitHub Actions owns release artifacts.
-
-> **Activation note.** The workflow files are staged under `ci/github-workflows/`
-> because the credential that published this repository is an OAuth App token
-> without GitHub's `workflow` scope. Copy them into `.github/workflows/` once
-> (web UI or a workflow-scoped credential) — see [`ci/README.md`](./ci/README.md).
-> Until then no workflow runs; the local build below is identical to CI.
+The first release is [v0.1.1](https://github.com/ban-sky/dsh-workbuddy/releases/tag/v0.1.1),
+with `ban-sky-dsh-workbuddy-0.1.1.tgz` and its SHA-256 attached.
 
 ## License
 

@@ -53,11 +53,10 @@ dsh plugin --profile web add "$PWD"
 
 ### 方式二：Release 安装包
 
-启用 Release 工作流后（见[构建与发布](#构建与发布默认在-github)），用带 workflow 权限的凭据打标签，
-再从 GitHub Release 下载 `ban-sky-dsh-workbuddy-*.tgz`：
+从 [GitHub Releases](https://github.com/ban-sky/dsh-workbuddy/releases) 下载最新的
+`ban-sky-dsh-workbuddy-*.tgz`（以及对应的 `.sha256`）：
 
 ```sh
-git tag v0.1.1 && git push origin v0.1.1
 dsh plugin --profile web add /path/to/ban-sky-dsh-workbuddy-0.1.1.tgz
 ```
 
@@ -165,15 +164,12 @@ npm run build       # dist/*.tgz + *.sha256
 
 ## 构建与发布（默认在 GitHub）
 
-- [`ci/github-workflows/ci.yml`](./ci/github-workflows/ci.yml)：每次 push / PR，在 Node 22 与 24 上跑测试与构建，上传 tarball 工件；
-- [`ci/github-workflows/release.yml`](./ci/github-workflows/release.yml)：推送 `v*` 标签时，在 GitHub Actions 上重新测试、构建，并把 tarball 与 SHA-256 附加到 GitHub Release。
+- [`.github/workflows/ci.yml`](./.github/workflows/ci.yml)：每次 push / PR，在 Node 22 与 24 上跑测试与构建，上传 tarball 工件；
+- [`.github/workflows/release.yml`](./.github/workflows/release.yml)：推送 `v*` 标签时，在 GitHub Actions 上重新测试、构建，并把 tarball 与 SHA-256 附加到 GitHub Release。
 
 本地不需要预先生成 `dist/`；发布产物以 GitHub Actions 为准。
-
-> **启用说明**：两个 workflow 文件暂放在 `ci/github-workflows/`，因为发布仓库所用的
-> OAuth App 令牌没有 GitHub 的 `workflow` scope。把它们复制到 `.github/workflows/`
-> 一次即可启用（网页操作或使用带 workflow 权限的凭据），详见 [`ci/README.md`](./ci/README.md)。
-> 启用前不会自动构建；下面的本地构建命令与 CI 完全一致。
+首个 Release 为 [v0.1.1](https://github.com/ban-sky/dsh-workbuddy/releases/tag/v0.1.1)，
+已附上 `ban-sky-dsh-workbuddy-0.1.1.tgz` 与对应 SHA-256。
 
 ## License
 
