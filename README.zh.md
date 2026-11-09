@@ -46,7 +46,7 @@ WorkBuddy 的聊天网关本身就是 OpenAI `chat/completions` 协议，但鉴�
 git clone https://github.com/ban-sky/dsh-workbuddy.git
 cd dsh-workbuddy
 npm ci
-npm test          # 45 项测试，包含本地假网关端到端
+npm test          # 54 项测试，包含本地假网关端到端
 npm run build     # 产出 dist/*.tgz 与 sha256
 dsh plugin --profile web add "$PWD"
 ```
@@ -57,7 +57,7 @@ dsh plugin --profile web add "$PWD"
 `ban-sky-dsh-workbuddy-*.tgz`（以及对应的 `.sha256`）：
 
 ```sh
-dsh plugin --profile web add /path/to/ban-sky-dsh-workbuddy-0.1.1.tgz
+dsh plugin --profile web add /path/to/ban-sky-dsh-workbuddy-0.1.2.tgz
 ```
 
 安装后重启 DSH（`dsh web`）。插件配置保存在 profile 的 `cordis.patch.yml` 里，模型组随插件启用。
@@ -103,9 +103,21 @@ dsh plugin --profile web add /path/to/ban-sky-dsh-workbuddy-0.1.1.tgz
 
 令牌保存在 `$DSH_HOME/.workbuddy-credentials.json`（默认 `~/.dsh`），权限 `0600`，不会写进 profile YAML。优先级：配置 `token` / `WORKBUDDY_TOKEN` → 设置页保存的令牌 → 桌面端登录文件。
 
+### 在设置页扫码/网页登录（无需桌面端）
+
+登录文件被加密、或 DSH 所在机器没有安装 WorkBuddy 时，用内置的网页登录：
+
+1. 打开 **设置 → 插件 → WorkBuddy**，选择中国站（`codebuddy.cn`）或国际站（`workbuddy.ai`）；
+2. 点 **生成登录链接** 并在浏览器打开，用 WorkBuddy 账号完成登录；
+3. 页面每 2 秒轮询一次，授权完成后自动保存 accessToken / refreshToken。
+
+登录会话 10 分钟内有效，点 **取消** 可丢弃。令牌与签发站点绑定，请让地区与账号匹配。
+
 ### 手动 token 模式
 
-登录文件被 Electron `safeStorage` 加密、或 DSH 跑在 WSL / 另一台机器时，从桌面端复制 `accessToken`（以及可选的 `uid`、`enterpriseId`）填入 `token` / 环境变量即可。令牌过期后需要重新复制（手动模式没有 refreshToken）。
+如果你拿到的是真正的 bearer token（例如来自未加密的登录文件），把它填进 `token` / `WORKBUDDY_TOKEN`，可选填 `uid`、`enterpriseId`。只要它是 JWT，插件会从 claims 读取 `sub`、`enterprise_id`、`tenant_id`、`iss` 来自动构造账号请求头。手动令牌没有 refreshToken，过期后需重新复制。
+
+加密字段 `{"$wbEncrypted":1,"envelope":"…"}` **不是** bearer token，直接粘贴必然 401；请改用上面的网页登录。
 
 ## 验证
 
@@ -125,7 +137,7 @@ workbuddy: shim listening on 127.0.0.1:<port>, gateway https://copilot.tencent.c
 | 现象 | 原因 / 处理 |
 | --- | --- |
 | 模型组出现但请求报 `MISSING_CREDENTIAL` | 未登录桌面端，或登录文件位置不在默认路径。登录后重启 DSH，或设 `WORKBUDDY_AUTH_FILE`。 |
-| 报 `ENCRYPTED_CREDENTIAL` | 新版桌面端加密了令牌字段。改用手动 `token` 模式。 |
+| 报 `ENCRYPTED_CREDENTIAL` | 新版桌面端加密了令牌字段。改用设置页里的网页登录（无需安装桌面端）。 |
 | 401 / `Offline user session not found` | 令牌失效且无法刷新。重新登录桌面端，或更新手动 token。 |
 | 402 / 积分不足 | WorkBuddy 账号额度用完；插件不代充、不绕过计费。 |
 | 模型列表和桌面端不一致 | 内置模型表是 2026-10 的快照，上游会增减模型；见「限制」。 |
@@ -148,7 +160,7 @@ workbuddy: shim listening on 127.0.0.1:<port>, gateway https://copilot.tencent.c
 
 ```sh
 npm ci
-npm test            # node:test，45 项
+npm test            # node:test，54 项
 npm run verify      # 逐个文件语法检查
 npm run build       # dist/*.tgz + *.sha256
 ```
@@ -158,8 +170,9 @@ npm run build       # dist/*.tgz + *.sha256
 - `test/credentials.test.js` — 登录文件发现/解析/加密检测/刷新单飞/请求头；
 - `test/shim.test.js` — 本地 shim 的鉴权、`/v1/models`、SSE 透传、401 刷新重试、错误映射；
 - `test/adapter.test.js` — 真实的 `PiAiAdapter` → shim → 假网关端到端（文本、工具调用、无凭据失败）；
-- `test/token-store.test.js` — 原子写入、`0600` 权限、规范化、损坏/超大文件处理；
+- `test/token-store.test.js` — 原子写入、`0600` 权限、规范化、refresh 元数据、损坏/超大文件处理；
 - `test/http.test.js` — 设置路由的 `status`/`save`/`clear`/`test` 动作、错误信封、连通探测；
+- `test/oauth.test.js` — 网页登录的 state 创建、轮询、账号信息、过期处理；
 - `test/plugin.test.js` — `apply()` 注册路由与无凭据诊断。
 
 ## 构建与发布（默认在 GitHub）
@@ -168,8 +181,8 @@ npm run build       # dist/*.tgz + *.sha256
 - [`.github/workflows/release.yml`](./.github/workflows/release.yml)：推送 `v*` 标签时，在 GitHub Actions 上重新测试、构建，并把 tarball 与 SHA-256 附加到 GitHub Release。
 
 本地不需要预先生成 `dist/`；发布产物以 GitHub Actions 为准。
-首个 Release 为 [v0.1.1](https://github.com/ban-sky/dsh-workbuddy/releases/tag/v0.1.1)，
-已附上 `ban-sky-dsh-workbuddy-0.1.1.tgz` 与对应 SHA-256。
+首个 Release 为 [v0.1.2](https://github.com/ban-sky/dsh-workbuddy/releases/tag/v0.1.2)，
+已附上 `ban-sky-dsh-workbuddy-0.1.2.tgz` 与对应 SHA-256。
 
 ## License
 

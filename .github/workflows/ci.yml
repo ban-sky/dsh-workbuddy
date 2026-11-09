@@ -44,6 +44,8 @@ jobs:
           tar -tzf dist/*.tgz | grep -q 'package/client.js'
           tar -tzf dist/*.tgz | grep -q 'package/lib/http.js'
           tar -tzf dist/*.tgz | grep -q 'package/lib/token-store.js'
+          tar -tzf dist/*.tgz | grep -q 'package/lib/jwt.js'
+          tar -tzf dist/*.tgz | grep -q 'package/lib/oauth.js'
 
       - uses: actions/upload-artifact@v4
         with:

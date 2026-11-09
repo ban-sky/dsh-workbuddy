@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.2 — 2026-11-09
+
+- Adds **browser sign-in** to the WorkBuddy settings tab: generate a login link
+  for the China (`codebuddy.cn`) or International (`workbuddy.ai`) site, open it,
+  and the plugin polls the login state and saves the access/refresh token
+  automatically. This works without the desktop app and is the supported path
+  when the auth file's tokens are `$wbEncrypted`.
+- Decodes JWT claims (`sub`, `enterprise_id`, `tenant_id`, `iss`, `exp`) when the
+  account ids are not typed, so a valid pasted bearer token no longer sends empty
+  `x-user-id` / `x-enterprise-id` / `x-tenant-id` headers and 401s.
+- Token store schema v2 keeps `refreshToken`, `expiresAt`, `tenantId`, and
+  `nickname`; a refresh of a saved token writes the rotated values back.
+- Encrypted `$wbEncrypted` fields are not bearer tokens; the UI and README now
+  say so and point to browser sign-in.
+- 54 tests (adds JWT-claim and web-login coverage).
+
 ## 0.1.1 — 2026-11-09
 
 - Adds **Settings → Plugins → WorkBuddy**: paste an accessToken (plus optional

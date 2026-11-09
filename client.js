@@ -17,7 +17,22 @@ window.__ModuleLoader__.load({
       tabLabel: 'WorkBuddy',
       title: 'WorkBuddy 接入',
       intro:
-        '把 WorkBuddy（CodeBuddy）桌面端已登录的账号接入 DSH。可以直接复用桌面端登录文件，也可以在这里粘贴 accessToken。',
+        '把 WorkBuddy（CodeBuddy）桌面端已登录的账号接入 DSH。可以直接复用桌面端登录文件，也可以在这里粘贴 accessToken，或在没有桌面端的机器上使用网页登录。',
+      loginTitle: '网页登录（无需桌面端）',
+      loginHint:
+        '生成登录链接后在浏览器打开并完成登录，插件会自动获取并保存令牌。适合 WorkBuddy 不在这台机器上、或登录文件已加密的情况。',
+      loginRegion: '登录站点',
+      loginRegionCn: '中国站（codebuddy.cn）',
+      loginRegionGlobal: '国际站（workbuddy.ai）',
+      loginStart: '生成登录链接',
+      loginStarting: '正在生成…',
+      loginOpen: '打开登录页',
+      loginWaiting: '等待浏览器授权…（完成后自动保存）',
+      loginDone: '登录成功，令牌已保存。',
+      loginExpired: '登录链接已过期，请重新生成。',
+      loginLinkHint: '如果按钮没有打开新窗口，请复制下面的链接到浏览器：',
+      loginCancel: '取消登录',
+      loginError: '登录失败',
       statusTitle: '当前状态',
       state: '连接状态',
       signedIn: '已接入',
@@ -74,7 +89,22 @@ window.__ModuleLoader__.load({
       tabLabel: 'WorkBuddy',
       title: 'WorkBuddy access',
       intro:
-        'Connect the account already signed in to the WorkBuddy (CodeBuddy) desktop app to DSH, or paste an accessToken here.',
+        'Connect the account already signed in to the WorkBuddy (CodeBuddy) desktop app to DSH, paste an accessToken, or use the web login when the desktop app is not available.',
+      loginTitle: 'Web login (no desktop app needed)',
+      loginHint:
+        'Generate a login link, open it in a browser, and sign in. The plugin receives and saves the token automatically. Use this when WorkBuddy is not installed on this machine or the sign-in file is encrypted.',
+      loginRegion: 'Login site',
+      loginRegionCn: 'China (codebuddy.cn)',
+      loginRegionGlobal: 'International (workbuddy.ai)',
+      loginStart: 'Generate login link',
+      loginStarting: 'Generating…',
+      loginOpen: 'Open login page',
+      loginWaiting: 'Waiting for browser authorization… (saved automatically)',
+      loginDone: 'Signed in and saved the token.',
+      loginExpired: 'The login link expired. Generate a new one.',
+      loginLinkHint: 'If the button did not open a new window, copy this link into a browser:',
+      loginCancel: 'Cancel login',
+      loginError: 'Login failed',
       statusTitle: 'Current status',
       state: 'Status',
       signedIn: 'Connected',
@@ -167,6 +197,11 @@ window.__ModuleLoader__.load({
 .wb-badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12px;line-height:1.5;background:var(--dsw-alias-bg-success,rgba(46,160,67,.12));color:var(--dsw-alias-label-success,#17663a)}
 .wb-badge-off{background:var(--dsw-alias-bg-warning,rgba(191,120,0,.12));color:var(--dsw-alias-label-warning,#8a5a00)}
 .wb-intro{margin:0;font-size:12px;line-height:1.7;color:var(--dsw-alias-label-secondary,inherit)}
+.wb-login{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border:1px dashed var(--dsw-alias-border-l1,rgba(0,0,0,.18));border-radius:var(--dsw-radius-md,8px)}
+.wb-login-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.wb-login-url{word-break:break-all;font-size:11px;color:var(--dsw-alias-label-secondary,inherit)}
+.wb-login-link{display:inline-flex;align-items:center;padding:7px 12px;border-radius:var(--dsw-radius-md,8px);background:var(--dsw-alias-button-primary-fill,#24292f);color:var(--dsw-alias-button-primary-label,#fff);font-size:12px;text-decoration:none}
+.wb-select{padding:6px 8px;border:1px solid var(--dsw-alias-border-l1,rgba(0,0,0,.16));border-radius:var(--dsw-radius-md,8px);background:var(--dsw-alias-bg-layer-1,transparent);color:inherit;font:inherit;font-size:12px}
 .wb-card{display:flex;flex-direction:column;gap:12px;padding:16px;border:1px solid var(--dsw-alias-settings-card-stroke,var(--dsw-alias-border-l1,rgba(0,0,0,.1)));border-radius:var(--dsw-radius-xl,12px);background:var(--dsw-alias-settings-card-fill,transparent)}
 .wb-card-title{margin:0;font-size:13px;font-weight:600}
 .wb-grid{display:grid;grid-template-columns:minmax(96px,max-content) minmax(0,1fr);gap:8px 16px;font-size:12px;line-height:1.6}
@@ -203,13 +238,15 @@ window.__ModuleLoader__.load({
      * @param {{t?: Function}} props - Slot props.
      */
     function WorkBuddySettings({ t }) {
-      const tr = typeof t === 'function' ? t : boundT
+      const tr = typeof t === 'function' ? t : (key) => key
       const [status, setStatus] = useState(null)
       const [form, setForm] = useState({ token: '', uid: '', enterpriseId: '', domain: '' })
       const [busy, setBusy] = useState('')
       const [message, setMessage] = useState(null)
       const [tokenVisible, setTokenVisible] = useState(false)
       const [clearArmed, setClearArmed] = useState(false)
+      const [login, setLogin] = useState(null)
+      const [loginRegion, setLoginRegion] = useState('cn')
 
       const applyStatus = useCallback((value) => {
         setStatus(value)
@@ -236,6 +273,40 @@ window.__ModuleLoader__.load({
       useEffect(() => {
         refresh()
       }, [refresh])
+
+      useEffect(() => {
+        if (login === null || login.status !== 'pending') return undefined
+        let cancelled = false
+        let timer
+        const tick = async () => {
+          try {
+            const value = await call('loginPoll', { loginId: login.loginId })
+            if (cancelled) return
+            if (value.status === 'done') {
+              applyStatus(value.state ?? (await call('status')))
+              setLogin({ ...login, status: 'done' })
+              setMessage({ kind: 'ok', text: tr('loginDone') })
+              return
+            }
+            if (value.status === 'expired') {
+              setLogin({ ...login, status: 'expired' })
+              setMessage({ kind: 'error', text: value.message || tr('loginExpired') })
+              return
+            }
+            timer = setTimeout(tick, 2000)
+          } catch (error) {
+            if (!cancelled) {
+              setLogin({ ...login, status: 'error' })
+              setMessage({ kind: 'error', text: `${tr('loginError')}: ${error.message}` })
+            }
+          }
+        }
+        timer = setTimeout(tick, 1500)
+        return () => {
+          cancelled = true
+          clearTimeout(timer)
+        }
+      }, [login?.loginId, login?.status, applyStatus])
 
       const onSave = async () => {
         if (form.token.trim() === '') {
@@ -307,6 +378,31 @@ window.__ModuleLoader__.load({
         } finally {
           setBusy('')
         }
+      }
+
+      const onLogin = async () => {
+        setBusy('login')
+        setMessage(null)
+        setLogin(null)
+        try {
+          const value = await call('loginStart', { region: loginRegion })
+          setLogin({ ...value, status: 'pending' })
+        } catch (error) {
+          setMessage({ kind: 'error', text: `${tr('loginError')}: ${error.message}` })
+        } finally {
+          setBusy('')
+        }
+      }
+
+      const onCancelLogin = async () => {
+        if (login?.loginId) {
+          try {
+            await call('loginCancel', { loginId: login.loginId })
+          } catch {
+            // The session expires on its own; cancellation is best-effort.
+          }
+        }
+        setLogin(null)
       }
 
       const sourceKey =
@@ -387,6 +483,83 @@ window.__ModuleLoader__.load({
                   status.authFile !== '' ? row(tr('authFile'), status.authFile, true) : null,
                 ].filter(Boolean)),
           status?.source === 'saved' ? h('p', { className: 'wb-note' }, tr('savedNote')) : null,
+        ),
+        h(
+          'section',
+          { className: 'wb-card' },
+          h('h3', { className: 'wb-card-title' }, tr('loginTitle')),
+          h('p', { className: 'wb-hint' }, tr('loginHint')),
+          h(
+            'div',
+            { className: 'wb-login' },
+            h(
+              'div',
+              { className: 'wb-login-row' },
+              h('span', { className: 'wb-label' }, tr('loginRegion')),
+              h(
+                'select',
+                {
+                  className: 'wb-select',
+                  value: loginRegion,
+                  disabled: busy !== '',
+                  onChange: (event) => setLoginRegion(event.target.value),
+                },
+                h('option', { value: 'cn' }, tr('loginRegionCn')),
+                h('option', { value: 'global' }, tr('loginRegionGlobal')),
+              ),
+            ),
+            h(
+              'div',
+              { className: 'wb-actions' },
+              h(
+                'button',
+                {
+                  type: 'button',
+                  className: 'wb-btn wb-btn-primary',
+                  disabled: busy !== '',
+                  onClick: () => {
+                    void onLogin()
+                  },
+                },
+                busy === 'login' ? tr('loginStarting') : tr('loginStart'),
+              ),
+              login !== null && login.status === 'pending'
+                ? h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'wb-btn',
+                      onClick: () => {
+                        void onCancelLogin()
+                      },
+                    },
+                    tr('loginCancel'),
+                  )
+                : null,
+            ),
+            login !== null && login.verificationUri
+              ? h(
+                  'div',
+                  { className: 'wb-login-row' },
+                  h(
+                    'a',
+                    {
+                      className: 'wb-login-link',
+                      href: login.verificationUri,
+                      target: '_blank',
+                      rel: 'noreferrer noopener',
+                    },
+                    tr('loginOpen'),
+                  ),
+                  h('code', { className: 'wb-login-url' }, login.verificationUri),
+                )
+              : null,
+            login !== null && login.status === 'pending' ? h('p', { className: 'wb-hint' }, tr('loginWaiting')) : null,
+            login !== null && login.status === 'done' ? h('p', { className: 'wb-hint' }, tr('loginDone')) : null,
+            login !== null && (login.status === 'expired' || login.status === 'error')
+              ? h('p', { className: 'wb-hint' }, tr('loginExpired'))
+              : null,
+          ),
         ),
         h(
           'section',

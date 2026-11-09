@@ -1,6 +1,6 @@
 {
   "name": "@ban-sky/dsh-workbuddy",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "WorkBuddy desktop app models inside DeepSeek Harness — reuses the signed-in WorkBuddy / CodeBuddy desktop account and exposes its models as a DSH model provider.",
   "type": "module",
   "engines": {
@@ -41,7 +41,7 @@
     "test": "node --test test/*.test.js",
     "test:watch": "node --test --watch test/*.test.js",
     "build": "node scripts/build.mjs",
-    "verify": "node --check index.js && node --check client.js && node --check lib/catalog.js && node --check lib/credentials.js && node --check lib/http.js && node --check lib/shim.js && node --check lib/adapter.js && node --check lib/token-store.js"
+    "verify": "node --check index.js && node --check client.js && node --check lib/catalog.js && node --check lib/credentials.js && node --check lib/http.js && node --check lib/jwt.js && node --check lib/oauth.js && node --check lib/shim.js && node --check lib/adapter.js && node --check lib/token-store.js"
   },
   "dsh": {
     "bundle": {

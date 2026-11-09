@@ -35,9 +35,13 @@ test('default path lives under DSH_HOME', () => {
 test('normalizes a token record and rejects unusable tokens', () => {
   assert.deepEqual(normalizeTokenRecord({ token: '  abc.def  ', uid: 'u1', domain: 'https://www.codebuddy.cn/' }), {
     token: 'abc.def',
+    refreshToken: '',
+    expiresAt: 0,
     uid: 'u1',
     enterpriseId: '',
+    tenantId: '',
     domain: 'www.codebuddy.cn',
+    nickname: '',
   })
   assert.equal(normalizeTokenRecord({ token: '' }), undefined)
   assert.equal(normalizeTokenRecord({ token: 'a\u0000b' }), undefined)
@@ -51,11 +55,29 @@ test('saves a 0600 file and reads it back', () => {
   assert.equal(record.token, 'secret-token')
   assert.equal(statSync(path).mode & 0o777, 0o600)
   const document = JSON.parse(readFileSync(path, 'utf8'))
-  assert.equal(document.version, 1)
+  assert.equal(document.version, 2)
   assert.equal(document.token, 'secret-token')
   assert.equal(typeof document.savedAt, 'string')
   assert.deepEqual(store.read(), record)
   assert.equal(store.present(), true)
+})
+
+test('persists refresh metadata from the web login', () => {
+  const { store } = makeStore()
+  const record = store.save({
+    token: 'access-token',
+    refreshToken: 'refresh-token',
+    expiresAt: Date.now() + 3_600_000,
+    uid: 'u-1',
+    enterpriseId: 'e-1',
+    tenantId: 't-1',
+    domain: 'www.codebuddy.cn',
+    nickname: 'Tester',
+  })
+  assert.equal(record.refreshToken, 'refresh-token')
+  assert.equal(record.tenantId, 't-1')
+  assert.equal(record.nickname, 'Tester')
+  assert.deepEqual(store.read(), record)
 })
 
 test('clear removes the file and is idempotent', () => {

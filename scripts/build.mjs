@@ -32,7 +32,18 @@ function fail(message) {
 
 const manifest = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
 
-const sources = ['index.js', 'client.js', 'lib/catalog.js', 'lib/credentials.js', 'lib/http.js', 'lib/shim.js', 'lib/adapter.js', 'lib/token-store.js']
+const sources = [
+  'index.js',
+  'client.js',
+  'lib/catalog.js',
+  'lib/credentials.js',
+  'lib/http.js',
+  'lib/jwt.js',
+  'lib/oauth.js',
+  'lib/shim.js',
+  'lib/adapter.js',
+  'lib/token-store.js',
+]
 for (const file of sources) {
   execFileSync(process.execPath, ['--check', join(root, file)], { stdio: 'inherit' })
 }

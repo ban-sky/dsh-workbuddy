@@ -23,6 +23,11 @@ import {
  * @param {string} [name] - File name.
  * @returns {{ home: string, file: string }} Paths.
  */
+function makeJwt(payload) {
+  const encode = (value) => Buffer.from(JSON.stringify(value)).toString('base64url')
+  return `${encode({ alg: 'none' })}.${encode(payload)}.signature`
+}
+
 function makeHome(auth, name = 'workbuddy-desktop.info') {
   const home = mkdtempSync(join(tmpdir(), 'dsh-workbuddy-'))
   const directory = join(home, '.local', 'share', 'CodeBuddyExtension', 'Data', 'Public', 'auth')
@@ -117,6 +122,53 @@ test('builds account headers from a manual token', async () => {
   assert.equal(headers['x-enterprise-id'], 'e9')
   assert.equal(headers['x-domain'], 'www.codebuddy.cn')
   assert.equal(credentials.status().source, 'token')
+})
+
+test('reads account headers from a JWT when no ids are typed', async () => {
+  const token = makeJwt({
+    sub: 'u-jwt',
+    enterprise_id: 'e-jwt',
+    tenant_id: 't-jwt',
+    iss: 'https://www.workbuddy.ai',
+    exp: Math.floor(Date.now() / 1000) + 3600,
+  })
+  const credentials = new WorkBuddyCredentials({
+    token,
+    env: {},
+    platform: 'linux',
+    home: mkdtempSync(join(tmpdir(), 'dsh-workbuddy-empty-')),
+    fetch: async () => {
+      throw new Error('no network expected')
+    },
+  })
+  const headers = await credentials.headers()
+  assert.equal(headers.authorization, `Bearer ${token}`)
+  assert.equal(headers['x-user-id'], 'u-jwt')
+  assert.equal(headers['x-enterprise-id'], 'e-jwt')
+  assert.equal(headers['x-tenant-id'], 't-jwt')
+  assert.equal(headers['x-domain'], 'www.workbuddy.ai')
+  assert.equal(credentials.baseURL(), 'https://www.workbuddy.ai')
+  assert.ok(credentials.status().expiresAt > Date.now())
+})
+
+test('reads account headers from a saved JWT', async () => {
+  const store = new TokenStore({ path: join(mkdtempSync(join(tmpdir(), 'dsh-workbuddy-store-')), 'tokens.json') })
+  const token = makeJwt({ sub: 'u-saved', enterprise_id: 'e-saved', iss: 'https://www.codebuddy.cn' })
+  store.save({ token })
+  const credentials = new WorkBuddyCredentials({
+    savedStore: store,
+    env: {},
+    platform: 'linux',
+    home: mkdtempSync(join(tmpdir(), 'dsh-workbuddy-empty-')),
+    fetch: async () => {
+      throw new Error('no network expected')
+    },
+  })
+  const headers = await credentials.headers()
+  assert.equal(headers['x-user-id'], 'u-saved')
+  assert.equal(headers['x-enterprise-id'], 'e-saved')
+  assert.equal(headers['x-tenant-id'], 'e-saved')
+  assert.equal(credentials.status().source, 'saved')
 })
 
 test('refreshes an expiring file token in memory and keeps the file untouched', async () => {

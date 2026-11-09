@@ -46,7 +46,7 @@ A desktop install is not required in manual-token mode (see below).
 git clone https://github.com/ban-sky/dsh-workbuddy.git
 cd dsh-workbuddy
 npm ci
-npm test          # 45 tests, including a fake-gateway end-to-end run
+npm test          # 54 tests, including a fake-gateway end-to-end run
 npm run build     # dist/*.tgz + sha256
 dsh plugin --profile web add "$PWD"
 ```
@@ -57,7 +57,7 @@ Download the latest `ban-sky-dsh-workbuddy-*.tgz` (and its `.sha256`) from
 [GitHub Releases](https://github.com/ban-sky/dsh-workbuddy/releases):
 
 ```sh
-dsh plugin --profile web add /path/to/ban-sky-dsh-workbuddy-0.1.1.tgz
+dsh plugin --profile web add /path/to/ban-sky-dsh-workbuddy-0.1.2.tgz
 ```
 
 Restart DSH after installing (`dsh web`). The plugin's configuration lives in the profile's `cordis.patch.yml`; the model group follows the plugin's enabled state.
@@ -103,9 +103,21 @@ You do not have to edit YAML at all:
 
 The saved token lives in `$DSH_HOME/.workbuddy-credentials.json` (`~/.dsh` by default), mode `0600`, never in the profile YAML. Precedence: `token` config / `WORKBUDDY_TOKEN` → saved settings token → desktop auth file.
 
+### Sign in from the browser (no desktop app)
+
+If the auth file is encrypted or WorkBuddy is not installed on the DSH host, use the built-in web login:
+
+1. Open **Settings → Plugins → WorkBuddy** and pick the China (`codebuddy.cn`) or International (`workbuddy.ai`) site.
+2. Press **生成登录链接** (Generate login link) and open the link; sign in with the WorkBuddy account.
+3. The page polls every 2 s and saves the access/refresh token automatically when authorization completes.
+
+The login session expires after 10 minutes; **取消** (Cancel) discards it. Tokens are tied to the site that issued them, so match the region to the account.
+
 ### Manual-token mode
 
-If the desktop auth file is encrypted with Electron `safeStorage`, or DSH runs in WSL / on another machine, copy `accessToken` (plus optional `uid` and `enterpriseId`) from the desktop app into `token` or `WORKBUDDY_TOKEN`. A manual token has no refresh token, so re-copy it when it expires.
+If you have a real bearer token (for example copied from a build that does not encrypt its auth file), put it in `token` or `WORKBUDDY_TOKEN`, together with optional `uid` / `enterpriseId`. The token string itself is enough when it is a JWT: the plugin reads `sub`, `enterprise_id`, `tenant_id`, and `iss` from the claims to build the account headers. A manual token has no refresh token, so re-copy it when it expires.
+
+An encrypted `{"$wbEncrypted":1,"envelope":"…"}` field is **not** a bearer token — copying it always produces 401. Use the browser sign-in above instead.
 
 ## Verify
 
@@ -125,7 +137,7 @@ workbuddy: shim listening on 127.0.0.1:<port>, gateway https://copilot.tencent.c
 | Symptom | Cause / fix |
 | --- | --- |
 | Group appears, requests fail with `MISSING_CREDENTIAL` | The desktop app is not signed in, or the auth file is outside the default paths. Sign in and restart DSH, or set `WORKBUDDY_AUTH_FILE`. |
-| `ENCRYPTED_CREDENTIAL` | The desktop build encrypts its token fields. Use manual `token` mode. |
+| `ENCRYPTED_CREDENTIAL` | The desktop build encrypts its token fields. Use the browser sign-in in the settings page (no desktop app needed). |
 | 401 / `Offline user session not found` | The token expired and cannot be refreshed. Sign in again, or update the manual token. |
 | 402 / insufficient credit | The WorkBuddy account is out of credit; the plugin neither tops it up nor bypasses billing. |
 | The model list differs from the desktop app | The bundled roster is a 2026-10 snapshot; see Limitations. |
@@ -148,7 +160,7 @@ workbuddy: shim listening on 127.0.0.1:<port>, gateway https://copilot.tencent.c
 
 ```sh
 npm ci
-npm test            # node:test, 45 tests
+npm test            # node:test, 54 tests
 npm run verify      # per-file syntax check
 npm run build       # dist/*.tgz + *.sha256
 ```
@@ -158,8 +170,9 @@ Test layout:
 - `test/credentials.test.js` — discovery, parsing, encrypted detection, single-flight refresh, headers;
 - `test/shim.test.js` — local auth, `/v1/models`, SSE passthrough, 401 refresh retry, error mapping;
 - `test/adapter.test.js` — real `PiAiAdapter` → shim → fake gateway (text, tool call, missing-credential failure);
-- `test/token-store.test.js` — atomic `0600` token store, normalization, corrupt/oversized files;
+- `test/token-store.test.js` — atomic `0600` token store, normalization, refresh metadata, corrupt/oversized files;
 - `test/http.test.js` — settings route actions (`status`/`save`/`clear`/`test`), envelopes, probe;
+- `test/oauth.test.js` — web-login state creation, polling, account collection, expiry;
 - `test/plugin.test.js` — `apply()` route registration and the no-credential diagnostic.
 
 ## Build and release (on GitHub by default)
@@ -168,8 +181,8 @@ Test layout:
 - [`.github/workflows/release.yml`](./.github/workflows/release.yml) — on a `v*` tag, re-tests, builds, and attaches the tarball plus SHA-256 to a GitHub Release.
 
 There is no need to commit `dist/`; GitHub Actions owns release artifacts.
-The first release is [v0.1.1](https://github.com/ban-sky/dsh-workbuddy/releases/tag/v0.1.1),
-with `ban-sky-dsh-workbuddy-0.1.1.tgz` and its SHA-256 attached.
+The first release is [v0.1.2](https://github.com/ban-sky/dsh-workbuddy/releases/tag/v0.1.2),
+with `ban-sky-dsh-workbuddy-0.1.2.tgz` and its SHA-256 attached.
 
 ## License
 

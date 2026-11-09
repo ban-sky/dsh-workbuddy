@@ -24,6 +24,7 @@ import { WorkBuddyCredentials } from './lib/credentials.js'
 import { createWorkBuddyAdapter } from './lib/adapter.js'
 import { startShim } from './lib/shim.js'
 import { createWorkBuddyHandler, ROUTE_PATH } from './lib/http.js'
+import { WorkBuddyOAuth } from './lib/oauth.js'
 import { defaultTokenStorePath, TokenStore } from './lib/token-store.js'
 
 /** Cordis services this plugin needs before it activates. */
@@ -104,6 +105,8 @@ export async function apply(ctx, config) {
     onWarning: (message) => ctx.logger.warn(`workbuddy: ${message}`),
   })
 
+  const oauth = new WorkBuddyOAuth({ fetchImpl: globalThis.fetch })
+
   const status = credentials.status()
   if (!status.signedIn) {
     ctx.logger.warn(
@@ -147,6 +150,7 @@ export async function apply(ctx, config) {
           fetch: createWorkBuddyHandler({
             credentials,
             tokenStore,
+            oauth,
             modelCount: WORKBUDDY_MODELS.length,
             onWarning: (message) => ctx.logger.warn(`workbuddy: ${message}`),
           }),
