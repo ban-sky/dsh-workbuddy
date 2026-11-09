@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.2.0 — 2026-11-10
+
+- **Breaking:** browser sign-in is the only credential source. The config
+  `token`, `uid`, `enterpriseId`, `domain`, `authFile`, and `writeBack` keys
+  and the `WORKBUDDY_TOKEN` / `WORKBUDDY_AUTH_FILE` environment variables are
+  removed, together with desktop `*.info` discovery, the paste form, and the
+  `save` route action.
+- The settings tab now contains only status, browser login, connection test,
+  and sign-out. Sign-out deletes `$DSH_HOME/.workbuddy-credentials.json`.
+- Configuration is now `baseURL`, `region`, and `port`.
+- Security: one 0600 credential file; tokens never enter config, logs,
+  responses, or the npm package; `$wbEncrypted` blobs have no input path
+  because they are not bearer tokens.
+- README and README.zh rewritten for the browser-login-only flow.
+- 45 tests.
+
 ## 0.1.3 — 2026-11-09
 
 - Rejects a pasted `$wbEncrypted` envelope in the token field with

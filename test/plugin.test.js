@@ -59,12 +59,7 @@ test('apply registers the workbuddy route with the full catalog', async () => {
   const upstream = await startFakeWorkBuddy({ reply: 'pong' })
   const { ctx, state } = stubContext()
   try {
-    await apply(ctx, {
-      token: 'upstream-token',
-      uid: 'user-1',
-      domain: 'www.codebuddy.cn',
-      baseURL: upstream.url,
-    })
+    await apply(ctx, { baseURL: upstream.url })
     assert.ok(state.registered, 'an adapter was registered')
     assert.equal(state.route?.path, '/api/workbuddy')
     assert.deepEqual(state.route?.methods, ['POST'])
@@ -98,7 +93,7 @@ test('apply still loads and warns when no credential exists', async () => {
     })
     assert.ok(state.registered, 'the route is registered even before sign-in')
     assert.ok(
-      state.warnings.some((warning) => warning.includes('未检测到 WorkBuddy 登录凭据')),
+      state.warnings.some((warning) => warning.includes('尚未登录')),
       'a missing credential produces a diagnostic',
     )
   } finally {

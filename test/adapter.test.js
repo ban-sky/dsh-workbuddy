@@ -4,12 +4,9 @@
  */
 
 import assert from 'node:assert/strict'
-import { mkdtempSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
 import test from 'node:test'
 import { WORKBUDDY_MODELS } from '../lib/catalog.js'
-import { WorkBuddyCredentials } from '../lib/credentials.js'
+import { emptyCredentials, savedCredentials } from './support/credentials.js'
 import { createWorkBuddyAdapter } from '../lib/adapter.js'
 import { startShim } from '../lib/shim.js'
 import { startFakeWorkBuddy } from './support/fake-workbuddy.js'
@@ -22,15 +19,7 @@ import { startFakeWorkBuddy } from './support/fake-workbuddy.js'
  */
 async function harness(options = {}) {
   const upstream = await startFakeWorkBuddy(options)
-  const credentials = new WorkBuddyCredentials({
-    token: 'upstream-token',
-    uid: 'user-1',
-    domain: 'www.codebuddy.cn',
-    baseURL: upstream.url,
-    env: {},
-    platform: 'linux',
-    home: mkdtempSync(join(tmpdir(), 'dsh-workbuddy-adapter-')),
-  })
+  const credentials = savedCredentials(upstream.url)
   const shim = await startShim({
     credentials,
     models: () => WORKBUDDY_MODELS,
@@ -153,11 +142,7 @@ test('preserves native tool calls from the gateway', async () => {
 test('fails with an auth failure when WorkBuddy has no credential', async () => {
   const upstream = await startFakeWorkBuddy()
   try {
-    const credentials = new WorkBuddyCredentials({
-      env: {},
-      platform: 'linux',
-      home: mkdtempSync(join(tmpdir(), 'dsh-workbuddy-none-')),
-    })
+    const credentials = emptyCredentials()
     const shim = await startShim({ credentials, models: () => WORKBUDDY_MODELS })
     const { adapter } = createWorkBuddyAdapter({
       providerId: 'workbuddy',
@@ -176,7 +161,7 @@ test('fails with an auth failure when WorkBuddy has no credential', async () => 
     assert.equal(finish.type, 'finish')
     assert.equal(finish.reason.kind, 'error')
     assert.equal(finish.reason.kind, 'error')
-    assert.match(finish.reason.failure.message, /未找到 WorkBuddy 登录凭据/)
+    assert.match(finish.reason.failure.message, /尚未登录 WorkBuddy/)
     await shim.close()
   } finally {
     await upstream.close()

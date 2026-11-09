@@ -1,6 +1,6 @@
 /**
- * Settings-route tests: envelopes, storage, credential reloading, and the
- * gateway probe. No token may leave the Host in a response body.
+ * Settings-route tests: envelopes, storage, login actions, and the gateway
+ * probe. No token may leave the Host in a response body.
  */
 
 import assert from 'node:assert/strict'
@@ -27,8 +27,7 @@ function fakeCredentials({ signedIn = true } = {}) {
     status() {
       return {
         signedIn,
-        source: signedIn ? 'file' : 'none',
-        authFile: signedIn ? '/home/user/auth.info' : '',
+        source: signedIn ? 'saved' : 'none',
         uid: 'u-1',
         nickname: '',
         enterpriseName: 'Acme',
@@ -39,7 +38,7 @@ function fakeCredentials({ signedIn = true } = {}) {
       }
     },
     async headers() {
-      if (!signedIn) throw new CredentialError('未找到 WorkBuddy 登录凭据。', 'missing')
+      if (!signedIn) throw new CredentialError('尚未登录 WorkBuddy，请先完成网页登录。', 'missing')
       return {
         authorization: 'Bearer secret-token',
         'content-type': 'application/json',
@@ -49,15 +48,38 @@ function fakeCredentials({ signedIn = true } = {}) {
     baseURL() {
       return 'https://copilot.tencent.com'
     },
-    buildHeaders(credential) {
+  }
+}
+
+/**
+ * Fake OAuth session surface.
+ *
+ * @returns {Record<string, any>} Fake OAuth.
+ */
+function fakeOAuth() {
+  return {
+    starts: [],
+    async start(input) {
+      this.starts.push(input)
+      return { loginId: 'login-1', verificationUri: 'https://example.test/login', expiresAt: 1, region: input.region }
+    },
+    async poll() {
       return {
-        authorization: `Bearer ${credential.accessToken}`,
-        'content-type': 'application/json',
-        'x-user-id': credential.uid,
-        'x-enterprise-id': credential.enterpriseId,
-        'x-domain': credential.domain,
+        status: 'done',
+        credential: {
+          accessToken: 'web-token',
+          refreshToken: 'web-refresh',
+          expiresAt: 123,
+          domain: 'www.codebuddy.cn',
+          uid: 'u-web',
+          enterpriseId: 'e-web',
+          tenantId: 't-web',
+          nickname: 'Ada',
+          enterpriseName: 'Acme',
+        },
       }
     },
+    cancel() {},
   }
 }
 
@@ -65,14 +87,15 @@ function fakeCredentials({ signedIn = true } = {}) {
  * Build a handler with a store in a fresh temporary directory.
  *
  * @param {{ signedIn?: boolean }} [options] - Fake state.
- * @returns {{ handle: Function, store: TokenStore, credentials: Record<string, any> }} Harness.
+ * @returns {{ handle: Function, store: TokenStore, credentials: Record<string, any>, oauth: Record<string, any> }} Harness.
  */
 function harness(options = {}) {
   const directory = mkdtempSync(join(tmpdir(), 'dsh-workbuddy-http-'))
   const store = new TokenStore({ path: join(directory, '.workbuddy-credentials.json') })
   const credentials = fakeCredentials(options)
-  const handle = createWorkBuddyHandler({ credentials, tokenStore: store, modelCount: 20 })
-  return { handle, store, credentials }
+  const oauth = fakeOAuth()
+  const handle = createWorkBuddyHandler({ credentials, tokenStore: store, oauth, modelCount: 20 })
+  return { handle, store, credentials, oauth }
 }
 
 /**
@@ -100,53 +123,23 @@ test('status reports non-secret state only', async () => {
   assert.equal(status, 200)
   assert.equal(body.ok, true)
   assert.equal(body.value.signedIn, true)
-  assert.equal(body.value.source, 'file')
+  assert.equal(body.value.source, 'saved')
   assert.equal(body.value.modelCount, 20)
   assert.equal(body.value.saved, false)
   assert.equal(text.includes('secret-token'), false)
   assert.equal(Object.hasOwn(body.value, 'token'), false)
-})
-
-test('save persists the token and reloads credentials', async () => {
-  const { handle, store, credentials } = harness()
-  const { status, body, text } = await post(handle, {
-    action: 'save',
-    token: 'secret-token',
-    uid: 'u-1',
-    enterpriseId: 'e-1',
-    domain: 'www.codebuddy.cn',
-  })
-  assert.equal(status, 200)
-  assert.equal(body.ok, true)
-  assert.equal(body.value.saved, true)
-  assert.equal(text.includes('secret-token'), false)
-  assert.equal(credentials.reloaded, 1)
-  assert.equal(store.read()?.token, 'secret-token')
-})
-
-test('save rejects a missing or unusable token', async () => {
-  const { handle, store } = harness()
-  const missing = await post(handle, { action: 'save', token: '  ' })
-  assert.equal(missing.status, 400)
-  assert.equal(missing.body.error.code, 'MISSING_TOKEN')
-  const control = await post(handle, { action: 'save', token: 'a\u0000b' })
-  assert.equal(control.status, 400)
-  assert.equal(control.body.error.code, 'INVALID_TOKEN')
-  const encrypted = await post(handle, { action: 'save', token: '{"$wbEncrypted":1,"envelope":"abc"}' })
-  assert.equal(encrypted.status, 400)
-  assert.equal(encrypted.body.error.code, 'ENCRYPTED_TOKEN')
-  assert.equal(store.present(), false)
+  assert.equal(Object.hasOwn(body.value, 'authFile'), false)
 })
 
 test('clear removes the saved token and reloads credentials', async () => {
   const { handle, store, credentials } = harness()
-  await post(handle, { action: 'save', token: 'secret-token' })
+  store.save({ token: 'secret-token', refreshToken: 'refresh-token' })
   const { status, body } = await post(handle, { action: 'clear' })
   assert.equal(status, 200)
   assert.equal(body.ok, true)
   assert.equal(body.value.saved, false)
   assert.equal(store.present(), false)
-  assert.equal(credentials.reloaded, 2)
+  assert.equal(credentials.reloaded, 1)
 })
 
 test('unknown actions and bad bodies get a stable error envelope', async () => {
@@ -182,7 +175,7 @@ test('test action sends a one-token chat completion with the credential headers'
     assert.equal(calls[0].init.headers.authorization, 'Bearer secret-token')
     const probe = JSON.parse(calls[0].init.body)
     assert.equal(probe.max_tokens, 1)
-    assert.equal(probe.stream, false)
+    assert.equal(probe.stream, true)
     assert.equal(probe.messages.length, 1)
   } finally {
     globalThis.fetch = original
@@ -204,32 +197,26 @@ test('test action reports an invalid token', async () => {
   }
 })
 
-test('test action can check a typed token without saving it', async () => {
-  const { handle, store } = harness()
-  const original = globalThis.fetch
-  const calls = []
-  globalThis.fetch = async (url, init) => {
-    calls.push({ url: String(url), init })
-    return new Response('{}', { status: 200 })
-  }
-  try {
-    const { body } = await post(handle, {
-      action: 'test',
-      token: 'typed-token',
-      uid: 'u-9',
-      enterpriseId: 'e-9',
-      domain: 'www.workbuddy.ai',
-    })
-    assert.equal(body.ok, true)
-    assert.equal(body.value.connected, true)
-    assert.equal(calls[0].url, 'https://www.workbuddy.ai/v2/chat/completions')
-    assert.equal(calls[0].init.headers.authorization, 'Bearer typed-token')
-    assert.equal(calls[0].init.headers['x-user-id'], 'u-9')
-    assert.equal(calls[0].init.headers['x-enterprise-id'], 'e-9')
-    assert.equal(store.read(), undefined)
-  } finally {
-    globalThis.fetch = original
-  }
+test('loginStart creates a session and loginPoll saves the token', async () => {
+  const { handle, store, credentials, oauth } = harness()
+  const started = await post(handle, { action: 'loginStart', region: 'global' })
+  assert.equal(started.status, 200)
+  assert.equal(started.body.value.loginId, 'login-1')
+  assert.equal(oauth.starts[0].region, 'global')
+
+  const polled = await post(handle, { action: 'loginPoll', loginId: 'login-1' })
+  assert.equal(polled.status, 200)
+  assert.equal(polled.body.value.status, 'done')
+  assert.equal(polled.body.text ?? '', '')
+  assert.equal(credentials.reloaded, 1)
+  const stored = store.read()
+  assert.equal(stored?.token, 'web-token')
+  assert.equal(stored?.refreshToken, 'web-refresh')
+  assert.equal(stored?.uid, 'u-web')
+  assert.equal(stored?.tenantId, 't-web')
+  const text = JSON.stringify(polled.body)
+  assert.equal(text.includes('web-token'), false)
+  assert.equal(text.includes('web-refresh'), false)
 })
 
 test('probeGateway surfaces a missing credential without a request', async () => {
@@ -239,5 +226,5 @@ test('probeGateway surfaces a missing credential without a request', async () =>
   })
   assert.equal(result.connected, false)
   assert.equal(result.code, 'missing')
-  assert.match(result.message, /凭据/)
+  assert.match(result.message, /登录/)
 })

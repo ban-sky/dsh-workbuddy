@@ -3,33 +3,12 @@
  */
 
 import assert from 'node:assert/strict'
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
 import test from 'node:test'
-import { WorkBuddyCredentials } from '../lib/credentials.js'
+import { emptyCredentials, savedCredentials } from './support/credentials.js'
 import { WORKBUDDY_MODELS } from '../lib/catalog.js'
-import { startShim } from '../lib/shim.js'
+import { prepareChannelBody, startShim } from '../lib/shim.js'
 import { startFakeWorkBuddy } from './support/fake-workbuddy.js'
 
-/**
- * Build token-mode credentials pointing at a fake gateway.
- *
- * @param {string} baseURL - Fake gateway URL.
- * @returns {WorkBuddyCredentials} Credentials.
- */
-function tokenCredentials(baseURL) {
-  return new WorkBuddyCredentials({
-    token: 'upstream-token',
-    uid: 'user-1',
-    enterpriseId: 'ent-1',
-    domain: 'www.codebuddy.cn',
-    baseURL,
-    env: {},
-    platform: 'linux',
-    home: mkdtempSync(join(tmpdir(), 'dsh-workbuddy-shim-')),
-  })
-}
 
 /**
  * POST one chat request to the shim.
@@ -50,7 +29,7 @@ function postChat(url, token, body) {
 test('rejects requests without the local shim token', async () => {
   const upstream = await startFakeWorkBuddy()
   const shim = await startShim({
-    credentials: tokenCredentials(upstream.url),
+    credentials: savedCredentials(upstream.url),
     models: () => [WORKBUDDY_MODELS[0]],
   })
   try {
@@ -68,7 +47,7 @@ test('rejects requests without the local shim token', async () => {
 test('lists the catalog over /v1/models', async () => {
   const upstream = await startFakeWorkBuddy()
   const shim = await startShim({
-    credentials: tokenCredentials(upstream.url),
+    credentials: savedCredentials(upstream.url),
     models: () => WORKBUDDY_MODELS.slice(0, 3),
   })
   try {
@@ -90,7 +69,7 @@ test('lists the catalog over /v1/models', async () => {
 
 test('streams a chat completion and forwards the WorkBuddy account headers', async () => {
   const upstream = await startFakeWorkBuddy({ reply: 'OK' })
-  const shim = await startShim({ credentials: tokenCredentials(upstream.url), models: () => [] })
+  const shim = await startShim({ credentials: savedCredentials(upstream.url), models: () => [] })
   try {
     const response = await postChat(shim.url, shim.token, {
       model: 'glm-5.2',
@@ -124,7 +103,7 @@ test('maps a WorkBuddy quota error to an OpenAI-shaped error body', async () => 
       body: { code: 4001, displayMsg: { zh: '积分不足，请充值后再试', en: 'insufficient credit' } },
     }),
   })
-  const shim = await startShim({ credentials: tokenCredentials(upstream.url), models: () => [] })
+  const shim = await startShim({ credentials: savedCredentials(upstream.url), models: () => [] })
   try {
     const response = await postChat(shim.url, shim.token, {
       model: 'glm-5.2',
@@ -143,28 +122,12 @@ test('maps a WorkBuddy quota error to an OpenAI-shaped error body', async () => 
 
 test('refreshes once and retries when the gateway rejects the token', async () => {
   const upstream = await startFakeWorkBuddy({ validToken: 'fresh-token', refreshedToken: 'fresh-token' })
-  const home = mkdtempSync(join(tmpdir(), 'dsh-workbuddy-retry-'))
-  const directory = join(home, '.local', 'share', 'CodeBuddyExtension', 'Data', 'Public', 'auth')
-  mkdirSync(directory, { recursive: true })
-  const authFile = join(directory, 'workbuddy-desktop.info')
-  writeFileSync(
-    authFile,
-    JSON.stringify({
-      auth: {
-        accessToken: 'stale-token',
-        refreshToken: 'refresh-token',
-        expiresAt: Date.now() + 3_600_000,
-        domain: 'www.codebuddy.cn',
-      },
-      account: { uid: 'user-1', enterpriseId: 'ent-1' },
-    }),
-  )
-  const credentials = new WorkBuddyCredentials({
-    authFile,
-    baseURL: upstream.url,
-    env: {},
-    platform: 'linux',
-    home,
+  const credentials = savedCredentials(upstream.url, {
+    token: 'stale-token',
+    refreshToken: 'refresh-token',
+    expiresAt: Date.now() + 3_600_000,
+    uid: 'user-1',
+    enterpriseId: 'ent-1',
   })
   const shim = await startShim({ credentials, models: () => [] })
   try {
@@ -187,11 +150,7 @@ test('refreshes once and retries when the gateway rejects the token', async () =
 
 test('reports missing credentials as MISSING_CREDENTIAL', async () => {
   const upstream = await startFakeWorkBuddy()
-  const credentials = new WorkBuddyCredentials({
-    env: {},
-    platform: 'linux',
-    home: mkdtempSync(join(tmpdir(), 'dsh-workbuddy-missing-')),
-  })
+  const credentials = emptyCredentials()
   const shim = await startShim({ credentials, models: () => [] })
   try {
     const response = await postChat(shim.url, shim.token, {
@@ -201,7 +160,7 @@ test('reports missing credentials as MISSING_CREDENTIAL', async () => {
     assert.equal(response.status, 401)
     const body = await response.json()
     assert.equal(body.error.code, 'MISSING_CREDENTIAL')
-    assert.match(body.error.message, /未找到 WorkBuddy 登录凭据/)
+    assert.match(body.error.message, /尚未登录 WorkBuddy/)
   } finally {
     await shim.close()
     await upstream.close()
@@ -210,7 +169,7 @@ test('reports missing credentials as MISSING_CREDENTIAL', async () => {
 
 test('serves health without leaking the token', async () => {
   const upstream = await startFakeWorkBuddy()
-  const credentials = tokenCredentials(upstream.url)
+  const credentials = savedCredentials(upstream.url)
   const shim = await startShim({ credentials, models: () => WORKBUDDY_MODELS })
   try {
     const response = await fetch(`${shim.url}/health`)
@@ -218,11 +177,38 @@ test('serves health without leaking the token', async () => {
     const body = await response.json()
     assert.equal(body.ok, true)
     assert.equal(body.signedIn, true)
-    assert.equal(body.source, 'token')
+    assert.equal(body.source, 'saved')
     assert.equal(body.models, WORKBUDDY_MODELS.length)
     assert.equal(JSON.stringify(body).includes('upstream-token'), false)
   } finally {
     await shim.close()
     await upstream.close()
   }
+})
+
+
+test('rewrites channel-gate fingerprints and the developer role', () => {
+  const raw = Buffer.from(
+    JSON.stringify({
+      model: 'glm-5.3',
+      messages: [
+        { role: 'developer', content: 'Create a concise title. You are an AI agent powered by DeepSeek Harness.' },
+        { role: 'user', content: 'You are an AI agent powered by DeepSeek Harness' },
+        { role: 'assistant', content: [{ type: 'text', text: 'You are interacting with the user through the DeepSeek Harness Web GUI' }] },
+      ],
+    }),
+  )
+  const body = JSON.parse(prepareChannelBody(raw).toString('utf8'))
+  assert.equal(body.messages[0].role, 'system')
+  assert.match(body.messages[0].content, /^You are a helpful assistant\./)
+  assert.equal(body.messages[0].content.includes('powered by DeepSeek Harness'), false)
+  assert.equal(body.messages[0].content.includes('running inside DeepSeek Harness'), true)
+  // User messages are the caller's own words and stay byte-for-byte.
+  assert.equal(body.messages[1].content, 'You are an AI agent powered by DeepSeek Harness')
+  assert.equal(body.messages[2].content[0].text.includes('working with the user inside'), true)
+})
+
+test('forwards a non-chat body unchanged', () => {
+  const raw = Buffer.from('{"input":"hello"}')
+  assert.equal(prepareChannelBody(raw), raw)
 })
