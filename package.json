@@ -1,0 +1,74 @@
+{
+  "name": "@ban-sky/dsh-workbuddy",
+  "version": "0.1.0",
+  "description": "WorkBuddy desktop app models inside DeepSeek Harness — reuses the signed-in WorkBuddy / CodeBuddy desktop account and exposes its models as a DSH model provider.",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./lib/*.js": "./lib/*.js",
+    "./cordis.patch.yml": "./cordis.patch.yml",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "index.js",
+    "lib/*.js",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "icon.svg",
+    "README.md",
+    "README.zh.md",
+    "CHANGELOG.md",
+    "LICENSE",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "dsh",
+    "workbuddy",
+    "codebuddy",
+    "model-provider"
+  ],
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "test:watch": "node --test --watch test/*.test.js",
+    "build": "node scripts/build.mjs",
+    "verify": "node --check index.js && node --check lib/catalog.js && node --check lib/credentials.js && node --check lib/shim.js && node --check lib/adapter.js"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "dependencies": {
+    "@earendil-works/pi-ai": "1.4.0"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.5",
+    "@deepseek-ai/dsh-llm": "0.2.1-rc.5",
+    "@deepseek-ai/dsh-llm-pi-ai": "0.2.1-rc.5",
+    "@deepseek-ai/schemastery": "^3.18.5"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "4.0.5",
+    "@deepseek-ai/dsh-llm": "0.2.1-rc.5",
+    "@deepseek-ai/dsh-llm-pi-ai": "0.2.1-rc.5",
+    "@deepseek-ai/schemastery": "3.18.5"
+  },
+  "license": "MIT",
+  "author": "ban-sky",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ban-sky/dsh-workbuddy.git"
+  },
+  "homepage": "https://github.com/ban-sky/dsh-workbuddy#readme",
+  "bugs": {
+    "url": "https://github.com/ban-sky/dsh-workbuddy/issues"
+  }
+}

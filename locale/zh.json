@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "WorkBuddy",
+    "description": "把已登录的 WorkBuddy 桌面端模型接入 DeepSeek Harness：复用桌面端登录态，在模型选择器里直接使用 WorkBuddy 账号的模型，令牌不出本机。"
+  }
+}

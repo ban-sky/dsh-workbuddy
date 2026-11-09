@@ -1,0 +1,162 @@
+# DSH WorkBuddy
+
+[![CI](https://github.com/ban-sky/dsh-workbuddy/actions/workflows/ci.yml/badge.svg)](https://github.com/ban-sky/dsh-workbuddy/actions/workflows/ci.yml)
+
+Bring the models of a signed-in **WorkBuddy / CodeBuddy desktop app** into [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH). Install the plugin, restart DSH, and a **WorkBuddy** group appears in the model picker; pick a model and chat, call tools, and send images inside DSH, reusing the desktop account and its credits.
+
+English | [中文](./README.zh.md)
+
+## How it works
+
+```text
+DSH agent loop
+   │  ctx.llm (provider-neutral model seam)
+   ▼
+@deepseek-ai/dsh-llm-pi-ai  (PiAiAdapter, openai-completions protocol)
+   │  http://127.0.0.1:<ephemeral port>/v1  +  a random per-boot local key
+   ▼
+dsh-workbuddy loopback shim (binds 127.0.0.1 only)
+   │  injects WorkBuddy Authorization / X-User-Id / X-Enterprise-Id / X-Domain
+   ▼
+WorkBuddy gateway  POST /v2/chat/completions
+   (CN copilot.tencent.com; international www.workbuddy.ai)
+```
+
+The WorkBuddy chat gateway already speaks the OpenAI `chat/completions` protocol, but it authenticates with the desktop app's rotating bearer token plus account headers. The plugin:
+
+1. **Finds credentials** in the desktop app's `CodeBuddyExtension/Data/Public/auth/*.info` (or accepts a manual token);
+2. **Forwards locally** through a loopback OpenAI-compatible shim that injects fresh credentials per request, refreshes an expiring token, and retries once;
+3. **Registers the provider** through the pi-ai adapter, so streaming, native tool calls, image input, and reasoning levels work through DSH's normal agent loop.
+
+The desktop auth file is **read-only by default**, and the WorkBuddy token never enters the plugin configuration, logs, or a response body.
+
+## Requirements
+
+- DSH `0.2.x` (developed and tested on `0.2.1-rc.5`), Node.js 22+;
+- A signed-in WorkBuddy (CN) or WorkBuddy AI (international) desktop app:
+  - macOS: `~/Library/Application Support/CodeBuddyExtension/Data/Public/auth/`
+  - Windows: `%LOCALAPPDATA%\CodeBuddyExtension\Data\Public\auth\`
+  - Linux: `${XDG_DATA_HOME:-~/.local/share}/CodeBuddyExtension/Data/Public/auth/`
+
+A desktop install is not required in manual-token mode (see below).
+
+## Install
+
+### From a GitHub Release (recommended)
+
+Download `ban-sky-dsh-workbuddy-*.tgz` from [Releases](https://github.com/ban-sky/dsh-workbuddy/releases), then:
+
+```sh
+dsh plugin --profile web add /path/to/ban-sky-dsh-workbuddy-0.1.0.tgz
+```
+
+### From a local checkout (development)
+
+```sh
+git clone https://github.com/ban-sky/dsh-workbuddy.git
+cd dsh-workbuddy
+npm ci
+npm test          # 27 tests, including a fake-gateway end-to-end run
+npm run build     # dist/*.tgz + sha256
+dsh plugin --profile web add "$PWD"
+```
+
+Restart DSH after installing (`dsh web`). The plugin's configuration lives in the profile's `cordis.patch.yml`; the model group follows the plugin's enabled state.
+
+## Configuration
+
+Zero configuration is the default: the plugin discovers the desktop auth file itself.
+
+To override, edit the `config` of the `workbuddy` row in the profile's `cordis.patch.yml`:
+
+```yaml
+- insert:
+    - id: workbuddy
+      name: '@ban-sky/dsh-workbuddy'
+      config:
+        authFile: ''            # explicit *.info path
+        token: ''               # manual accessToken (instead of authFile)
+        uid: ''                 # account id for manual-token mode
+        enterpriseId: ''        # enterprise id for manual-token mode
+        domain: ''              # defaults to www.codebuddy.cn
+        baseURL: ''             # override the gateway; region picks the default
+        region: auto            # auto | cn | global
+        port: 0                 # shim port; 0 = ephemeral
+        writeBack: false        # persist refreshed tokens into the auth file
+```
+
+Environment variables:
+
+| Variable | Meaning |
+| --- | --- |
+| `WORKBUDDY_AUTH_FILE` | Explicit desktop auth-file path |
+| `WORKBUDDY_TOKEN` | Manual accessToken (takes precedence over the auth file) |
+
+`token` is marked secret in the config schema; prefer the environment variable when you do not want the token in YAML.
+
+### Manual-token mode
+
+If the desktop auth file is encrypted with Electron `safeStorage`, or DSH runs in WSL / on another machine, copy `accessToken` (plus optional `uid` and `enterpriseId`) from the desktop app into `token` or `WORKBUDDY_TOKEN`. A manual token has no refresh token, so re-copy it when it expires.
+
+## Verify
+
+1. Open the DSH model picker after restarting: a **WorkBuddy** group with 20 models appears (GLM-5.3 family, Kimi, MiniMax, DeepSeek-V4, Hy, …).
+2. Pick a model and send "hello": it streams a normal reply.
+3. Image and tool tasks work too (the gateway supports native OpenAI tool calls).
+
+Without GUI access, confirm the plugin started in the DSH log:
+
+```text
+workbuddy: shim listening on 127.0.0.1:<port>, gateway https://copilot.tencent.com, 20 models
+```
+
+## Troubleshooting
+
+| Symptom | Cause / fix |
+| --- | --- |
+| Group appears, requests fail with `MISSING_CREDENTIAL` | The desktop app is not signed in, or the auth file is outside the default paths. Sign in and restart DSH, or set `WORKBUDDY_AUTH_FILE`. |
+| `ENCRYPTED_CREDENTIAL` | The desktop build encrypts its token fields. Use manual `token` mode. |
+| 401 / `Offline user session not found` | The token expired and cannot be refreshed. Sign in again, or update the manual token. |
+| 402 / insufficient credit | The WorkBuddy account is out of credit; the plugin neither tops it up nor bypasses billing. |
+| The model list differs from the desktop app | The bundled roster is a 2026-10 snapshot; see Limitations. |
+
+## Security and privacy
+
+- The shim binds **`127.0.0.1` only**, uses an ephemeral port, and requires a random per-boot bearer key.
+- The desktop auth file is read-only by default; `writeBack: true` opts in to an atomic write-back.
+- The token appears only in request headers toward the WorkBuddy gateway — never in logs, config, or response bodies.
+- Conversation content is forwarded from this machine to the WorkBuddy gateway and is governed by your agreement with WorkBuddy; the plugin collects no telemetry.
+
+## Limitations
+
+- **The model roster is a snapshot.** The upstream adds and retires model ids at will; a retired id fails with a clear upstream error. Issues with the current roster are welcome.
+- **Encrypted desktop credentials are not decrypted.** `safeStorage` requires the desktop app's own helper process; the plugin reports the condition instead of bypassing it.
+- **Only the WorkBuddy / CodeBuddy gateways are supported**: `copilot.tencent.com` (CN) and `www.workbuddy.ai` (international). A compatible self-hosted proxy can be reached with `baseURL`.
+- **CI does not contact the real WorkBuddy service.** Tests use a local fake gateway covering the protocol, auth, refresh, error mapping, and tool calls; live end-to-end verification requires a signed-in desktop environment.
+
+## Development
+
+```sh
+npm ci
+npm test            # node:test, 27 tests
+npm run verify      # per-file syntax check
+npm run build       # dist/*.tgz + *.sha256
+```
+
+Test layout:
+
+- `test/credentials.test.js` — discovery, parsing, encrypted detection, single-flight refresh, headers;
+- `test/shim.test.js` — local auth, `/v1/models`, SSE passthrough, 401 refresh retry, error mapping;
+- `test/adapter.test.js` — real `PiAiAdapter` → shim → fake gateway (text, tool call, missing-credential failure);
+- `test/plugin.test.js` — `apply()` route registration and the no-credential diagnostic.
+
+## Build and release (on GitHub by default)
+
+- `.github/workflows/ci.yml` — tests and builds on Node 22 and 24 for every push / PR, and uploads the tarball artifacts;
+- `.github/workflows/release.yml` — on a `v*` tag, re-tests, builds, and attaches the tarball plus SHA-256 to a GitHub Release.
+
+There is no need to commit `dist/`; GitHub Actions owns release artifacts.
+
+## License
+
+MIT. Model names and protocol behavior come from public WorkBuddy documentation and public community notes; see [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).

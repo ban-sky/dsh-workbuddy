@@ -1,0 +1,8 @@
+# dsh-workbuddy bundle patch
+#
+# Mounts the Host half. The models appear under the "WorkBuddy" group in the
+# DSH model picker; the Client half is intentionally absent because the model
+# picker is the entire user interface.
+- insert:
+    - id: workbuddy
+      name: '@ban-sky/dsh-workbuddy'

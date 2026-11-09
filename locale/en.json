@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "WorkBuddy",
+    "description": "Use the models of a signed-in WorkBuddy desktop app inside DeepSeek Harness. Reuses the app's sign-in; the token never leaves this machine."
+  }
+}
