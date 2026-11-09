@@ -1,7 +1,5 @@
 # DSH WorkBuddy
 
-[![CI](https://github.com/ban-sky/dsh-workbuddy/actions/workflows/ci.yml/badge.svg)](https://github.com/ban-sky/dsh-workbuddy/actions/workflows/ci.yml)
-
 把已登录的 **WorkBuddy / CodeBuddy 桌面端**里的模型接进 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）。装好插件、重启 DSH，模型选择器里就会出现 **WorkBuddy** 分组；选一个模型即可在 DSH 里对话、跑工具、发图片，复用桌面端账号与积分。
 
 [English](./README.md) | 中文
@@ -152,10 +150,15 @@ npm run build       # dist/*.tgz + *.sha256
 
 ## 构建与发布（默认在 GitHub）
 
-- `.github/workflows/ci.yml`：每次 push / PR，在 Node 22 与 24 上跑测试与构建，上传 tarball 工件；
-- `.github/workflows/release.yml`：推送 `v*` 标签时，在 GitHub Actions 上重新测试、构建，并把 tarball 与 SHA-256 附加到 GitHub Release。
+- [`ci/github-workflows/ci.yml`](./ci/github-workflows/ci.yml)：每次 push / PR，在 Node 22 与 24 上跑测试与构建，上传 tarball 工件；
+- [`ci/github-workflows/release.yml`](./ci/github-workflows/release.yml)：推送 `v*` 标签时，在 GitHub Actions 上重新测试、构建，并把 tarball 与 SHA-256 附加到 GitHub Release。
 
 本地不需要预先生成 `dist/`；发布产物以 GitHub Actions 为准。
+
+> **启用说明**：两个 workflow 文件暂放在 `ci/github-workflows/`，因为发布仓库所用的
+> OAuth App 令牌没有 GitHub 的 `workflow` scope。把它们复制到 `.github/workflows/`
+> 一次即可启用（网页操作或使用带 workflow 权限的凭据），详见 [`ci/README.md`](./ci/README.md)。
+> 启用前不会自动构建；下面的本地构建命令与 CI 完全一致。
 
 ## License
 

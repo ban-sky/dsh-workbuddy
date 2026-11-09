@@ -1,7 +1,5 @@
 # DSH WorkBuddy
 
-[![CI](https://github.com/ban-sky/dsh-workbuddy/actions/workflows/ci.yml/badge.svg)](https://github.com/ban-sky/dsh-workbuddy/actions/workflows/ci.yml)
-
 Bring the models of a signed-in **WorkBuddy / CodeBuddy desktop app** into [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH). Install the plugin, restart DSH, and a **WorkBuddy** group appears in the model picker; pick a model and chat, call tools, and send images inside DSH, reusing the desktop account and its credits.
 
 English | [中文](./README.zh.md)
@@ -152,10 +150,16 @@ Test layout:
 
 ## Build and release (on GitHub by default)
 
-- `.github/workflows/ci.yml` — tests and builds on Node 22 and 24 for every push / PR, and uploads the tarball artifacts;
-- `.github/workflows/release.yml` — on a `v*` tag, re-tests, builds, and attaches the tarball plus SHA-256 to a GitHub Release.
+- [`ci/github-workflows/ci.yml`](./ci/github-workflows/ci.yml) — tests and builds on Node 22 and 24 for every push / PR, and uploads the tarball artifacts;
+- [`ci/github-workflows/release.yml`](./ci/github-workflows/release.yml) — on a `v*` tag, re-tests, builds, and attaches the tarball plus SHA-256 to a GitHub Release.
 
 There is no need to commit `dist/`; GitHub Actions owns release artifacts.
+
+> **Activation note.** The workflow files are staged under `ci/github-workflows/`
+> because the credential that published this repository is an OAuth App token
+> without GitHub's `workflow` scope. Copy them into `.github/workflows/` once
+> (web UI or a workflow-scoped credential) — see [`ci/README.md`](./ci/README.md).
+> Until then no workflow runs; the local build below is identical to CI.
 
 ## License
 
