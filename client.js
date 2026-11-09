@@ -37,7 +37,7 @@ window.__ModuleLoader__.load({
       savedNote: '当前请求使用插件内保存的令牌；清除后会回退到桌面端登录文件。',
       formTitle: '粘贴 accessToken',
       formHint:
-        'accessToken 只保存在本机 DSH 目录下的 .workbuddy-credentials.json（权限 0600），不会写入插件配置、日志或网络响应。',
+        'accessToken 只保存在本机 DSH 目录下的 .workbuddy-credentials.json（权限 0600），不会写入插件配置、日志或网络响应。输入框有内容时，「测试连接」直接验证它，不会保存。',
       tokenLabel: 'accessToken',
       tokenPlaceholder: '粘贴 WorkBuddy / CodeBuddy 的 accessToken',
       uidLabel: '账号 uid（可选）',
@@ -95,7 +95,7 @@ window.__ModuleLoader__.load({
         'Requests use the token saved in this plugin. Clearing it falls back to the desktop sign-in file.',
       formTitle: 'Paste an accessToken',
       formHint:
-        'The accessToken is stored only in .workbuddy-credentials.json (mode 0600) inside your local DSH directory. It is never written to the plugin config, logs, or a network response.',
+        'The accessToken is stored only in .workbuddy-credentials.json (mode 0600) inside your local DSH directory. It is never written to the plugin config, logs, or a network response. When the field is non-empty, Test connection checks that token without saving it.',
       tokenLabel: 'accessToken',
       tokenPlaceholder: 'Paste the WorkBuddy / CodeBuddy accessToken',
       uidLabel: 'Account uid (optional)',
@@ -268,7 +268,12 @@ window.__ModuleLoader__.load({
         setBusy('test')
         setMessage(null)
         try {
-          const result = await call('test')
+          const result = await call('test', {
+            token: form.token.trim(),
+            uid: form.uid.trim(),
+            enterpriseId: form.enterpriseId.trim(),
+            domain: form.domain.trim(),
+          })
           setMessage({ kind: result.connected ? 'ok' : 'error', text: result.message })
           try {
             applyStatus(await call('status'))

@@ -100,7 +100,7 @@ dsh plugin --profile web add /path/to/ban-sky-dsh-workbuddy-0.1.1.tgz
 
 1. 打开 **设置 → 插件 → WorkBuddy**；
 2. 粘贴桌面端的 `accessToken`（可选填 `uid`、`enterpriseId`、`domain`），点 **保存并连接**。下一次请求立即生效，无需重启；
-3. **测试连接** 会向网关发送一个 1 token 的 `ping`，直接判断令牌是否被接受；**清除** 会删除已保存的令牌，并回退到桌面端登录文件（如果存在）。
+3. **测试连接** 会向网关发送一个 1 token 的 `ping`，直接判断令牌是否被接受；如果输入框里还有令牌，会直接测试它而不保存。**清除** 会删除已保存的令牌，并回退到桌面端登录文件（如果存在）。
 
 令牌保存在 `$DSH_HOME/.workbuddy-credentials.json`（默认 `~/.dsh`），权限 `0600`，不会写进 profile YAML。优先级：配置 `token` / `WORKBUDDY_TOKEN` → 设置页保存的令牌 → 桌面端登录文件。
 

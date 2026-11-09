@@ -13,6 +13,8 @@
   the gateway's `/v3/config` answers without authentication and could not tell a
   valid token from an invalid one.
 - 44 tests (token store, settings HTTP actions, probe, saved-token precedence).
+- Test connection checks the token typed in the form without saving it, so a
+  pasted value can be validated before it is stored.
 
 ## 0.1.0 — 2026-11-09
 

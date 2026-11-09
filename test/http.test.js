@@ -49,6 +49,15 @@ function fakeCredentials({ signedIn = true } = {}) {
     baseURL() {
       return 'https://copilot.tencent.com'
     },
+    buildHeaders(credential) {
+      return {
+        authorization: `Bearer ${credential.accessToken}`,
+        'content-type': 'application/json',
+        'x-user-id': credential.uid,
+        'x-enterprise-id': credential.enterpriseId,
+        'x-domain': credential.domain,
+      }
+    },
   }
 }
 
@@ -187,6 +196,34 @@ test('test action reports an invalid token', async () => {
     assert.equal(body.value.connected, false)
     assert.equal(body.value.authFailed, true)
     assert.equal(body.value.httpStatus, 401)
+  } finally {
+    globalThis.fetch = original
+  }
+})
+
+test('test action can check a typed token without saving it', async () => {
+  const { handle, store } = harness()
+  const original = globalThis.fetch
+  const calls = []
+  globalThis.fetch = async (url, init) => {
+    calls.push({ url: String(url), init })
+    return new Response('{}', { status: 200 })
+  }
+  try {
+    const { body } = await post(handle, {
+      action: 'test',
+      token: 'typed-token',
+      uid: 'u-9',
+      enterpriseId: 'e-9',
+      domain: 'www.workbuddy.ai',
+    })
+    assert.equal(body.ok, true)
+    assert.equal(body.value.connected, true)
+    assert.equal(calls[0].url, 'https://www.workbuddy.ai/v2/chat/completions')
+    assert.equal(calls[0].init.headers.authorization, 'Bearer typed-token')
+    assert.equal(calls[0].init.headers['x-user-id'], 'u-9')
+    assert.equal(calls[0].init.headers['x-enterprise-id'], 'e-9')
+    assert.equal(store.read(), undefined)
   } finally {
     globalThis.fetch = original
   }

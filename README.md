@@ -101,7 +101,7 @@ You do not have to edit YAML at all:
 
 1. Open **Settings → Plugins → WorkBuddy**.
 2. Paste the desktop app's `accessToken` (and optionally `uid`, `enterpriseId`, `domain`) and press **保存并连接** (Save and connect). The token is used on the next request, no restart needed.
-3. **测试连接** (Test connection) sends a one-token `ping` to the gateway and reports whether the token is accepted; **清除** (Clear) removes the saved token and falls back to the desktop auth file if one exists.
+3. **测试连接** (Test connection) sends a one-token `ping` to the gateway and reports whether the token is accepted. If the token field still contains a value, that token is tested without being saved. **清除** (Clear) removes the saved token and falls back to the desktop auth file if one exists.
 
 The saved token lives in `$DSH_HOME/.workbuddy-credentials.json` (`~/.dsh` by default), mode `0600`, never in the profile YAML. Precedence: `token` config / `WORKBUDDY_TOKEN` → saved settings token → desktop auth file.
 
