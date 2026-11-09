@@ -12,7 +12,7 @@
 - The connection test now sends the smallest possible chat completion, because
   the gateway's `/v3/config` answers without authentication and could not tell a
   valid token from an invalid one.
-- 44 tests (token store, settings HTTP actions, probe, saved-token precedence).
+- 45 tests (token store, settings HTTP actions, probe, saved-token precedence).
 - Test connection checks the token typed in the form without saving it, so a
   pasted value can be validated before it is stored.
 

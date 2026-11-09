@@ -46,7 +46,7 @@ A desktop install is not required in manual-token mode (see below).
 git clone https://github.com/ban-sky/dsh-workbuddy.git
 cd dsh-workbuddy
 npm ci
-npm test          # 44 tests, including a fake-gateway end-to-end run
+npm test          # 45 tests, including a fake-gateway end-to-end run
 npm run build     # dist/*.tgz + sha256
 dsh plugin --profile web add "$PWD"
 ```
@@ -150,7 +150,7 @@ workbuddy: shim listening on 127.0.0.1:<port>, gateway https://copilot.tencent.c
 
 ```sh
 npm ci
-npm test            # node:test, 44 tests
+npm test            # node:test, 45 tests
 npm run verify      # per-file syntax check
 npm run build       # dist/*.tgz + *.sha256
 ```

@@ -46,7 +46,7 @@ WorkBuddy 的聊天网关本身就是 OpenAI `chat/completions` 协议，但鉴�
 git clone https://github.com/ban-sky/dsh-workbuddy.git
 cd dsh-workbuddy
 npm ci
-npm test          # 44 项测试，包含本地假网关端到端
+npm test          # 45 项测试，包含本地假网关端到端
 npm run build     # 产出 dist/*.tgz 与 sha256
 dsh plugin --profile web add "$PWD"
 ```
@@ -149,7 +149,7 @@ workbuddy: shim listening on 127.0.0.1:<port>, gateway https://copilot.tencent.c
 
 ```sh
 npm ci
-npm test            # node:test，44 项
+npm test            # node:test，45 项
 npm run verify      # 逐个文件语法检查
 npm run build       # dist/*.tgz + *.sha256
 ```
