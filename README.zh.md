@@ -40,15 +40,7 @@ WorkBuddy 的聊天网关本身就是 OpenAI `chat/completions` 协议，但鉴�
 
 ## 安装
 
-### 方式一：GitHub Release 安装包（推荐）
-
-从 [Releases](https://github.com/ban-sky/dsh-workbuddy/releases) 下载 `ban-sky-dsh-workbuddy-*.tgz`，然后：
-
-```sh
-dsh plugin --profile web add /path/to/ban-sky-dsh-workbuddy-0.1.0.tgz
-```
-
-### 方式二：本地目录（开发）
+### 方式一：从源码安装（当前可用）
 
 ```sh
 git clone https://github.com/ban-sky/dsh-workbuddy.git
@@ -57,6 +49,16 @@ npm ci
 npm test          # 27 项测试，包含本地假网关端到端
 npm run build     # 产出 dist/*.tgz 与 sha256
 dsh plugin --profile web add "$PWD"
+```
+
+### 方式二：Release 安装包
+
+启用 Release 工作流后（见[构建与发布](#构建与发布默认在-github)），用带 workflow 权限的凭据打标签，
+再从 GitHub Release 下载 `ban-sky-dsh-workbuddy-*.tgz`：
+
+```sh
+git tag v0.1.0 && git push origin v0.1.0
+dsh plugin --profile web add /path/to/ban-sky-dsh-workbuddy-0.1.0.tgz
 ```
 
 安装后重启 DSH（`dsh web`）。插件配置保存在 profile 的 `cordis.patch.yml` 里，模型组随插件启用。

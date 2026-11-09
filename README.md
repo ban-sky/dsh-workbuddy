@@ -40,15 +40,7 @@ A desktop install is not required in manual-token mode (see below).
 
 ## Install
 
-### From a GitHub Release (recommended)
-
-Download `ban-sky-dsh-workbuddy-*.tgz` from [Releases](https://github.com/ban-sky/dsh-workbuddy/releases), then:
-
-```sh
-dsh plugin --profile web add /path/to/ban-sky-dsh-workbuddy-0.1.0.tgz
-```
-
-### From a local checkout (development)
+### From source (works today)
 
 ```sh
 git clone https://github.com/ban-sky/dsh-workbuddy.git
@@ -57,6 +49,17 @@ npm ci
 npm test          # 27 tests, including a fake-gateway end-to-end run
 npm run build     # dist/*.tgz + sha256
 dsh plugin --profile web add "$PWD"
+```
+
+### From a release asset
+
+Once the release workflow is activated (see [Build and release](#build-and-release-on-github-by-default)),
+tag a version with a workflow-scoped credential and download
+`ban-sky-dsh-workbuddy-*.tgz` from the created GitHub Release:
+
+```sh
+git tag v0.1.0 && git push origin v0.1.0
+dsh plugin --profile web add /path/to/ban-sky-dsh-workbuddy-0.1.0.tgz
 ```
 
 Restart DSH after installing (`dsh web`). The plugin's configuration lives in the profile's `cordis.patch.yml`; the model group follows the plugin's enabled state.
