@@ -1,6 +1,6 @@
 {
   "name": "@ban-sky/dsh-workbuddy",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "WorkBuddy desktop app models inside DeepSeek Harness — reuses the signed-in WorkBuddy / CodeBuddy desktop account and exposes its models as a DSH model provider.",
   "type": "module",
   "engines": {

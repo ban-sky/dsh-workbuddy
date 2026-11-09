@@ -46,7 +46,7 @@ WorkBuddy 的聊天网关本身就是 OpenAI `chat/completions` 协议，但鉴�
 git clone https://github.com/ban-sky/dsh-workbuddy.git
 cd dsh-workbuddy
 npm ci
-npm test          # 54 项测试，包含本地假网关端到端
+npm test          # 55 项测试，包含本地假网关端到端
 npm run build     # 产出 dist/*.tgz 与 sha256
 dsh plugin --profile web add "$PWD"
 ```
@@ -57,7 +57,7 @@ dsh plugin --profile web add "$PWD"
 `ban-sky-dsh-workbuddy-*.tgz`（以及对应的 `.sha256`）：
 
 ```sh
-dsh plugin --profile web add /path/to/ban-sky-dsh-workbuddy-0.1.2.tgz
+dsh plugin --profile web add /path/to/ban-sky-dsh-workbuddy-0.1.3.tgz
 ```
 
 安装后重启 DSH（`dsh web`）。插件配置保存在 profile 的 `cordis.patch.yml` 里，模型组随插件启用。
@@ -160,7 +160,7 @@ workbuddy: shim listening on 127.0.0.1:<port>, gateway https://copilot.tencent.c
 
 ```sh
 npm ci
-npm test            # node:test，54 项
+npm test            # node:test，55 项
 npm run verify      # 逐个文件语法检查
 npm run build       # dist/*.tgz + *.sha256
 ```
@@ -181,8 +181,8 @@ npm run build       # dist/*.tgz + *.sha256
 - [`.github/workflows/release.yml`](./.github/workflows/release.yml)：推送 `v*` 标签时，在 GitHub Actions 上重新测试、构建，并把 tarball 与 SHA-256 附加到 GitHub Release。
 
 本地不需要预先生成 `dist/`；发布产物以 GitHub Actions 为准。
-首个 Release 为 [v0.1.2](https://github.com/ban-sky/dsh-workbuddy/releases/tag/v0.1.2)，
-已附上 `ban-sky-dsh-workbuddy-0.1.2.tgz` 与对应 SHA-256。
+首个 Release 为 [v0.1.3](https://github.com/ban-sky/dsh-workbuddy/releases/tag/v0.1.3)，
+已附上 `ban-sky-dsh-workbuddy-0.1.3.tgz` 与对应 SHA-256。
 
 ## License
 

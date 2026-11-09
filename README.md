@@ -46,7 +46,7 @@ A desktop install is not required in manual-token mode (see below).
 git clone https://github.com/ban-sky/dsh-workbuddy.git
 cd dsh-workbuddy
 npm ci
-npm test          # 54 tests, including a fake-gateway end-to-end run
+npm test          # 55 tests, including a fake-gateway end-to-end run
 npm run build     # dist/*.tgz + sha256
 dsh plugin --profile web add "$PWD"
 ```
@@ -57,7 +57,7 @@ Download the latest `ban-sky-dsh-workbuddy-*.tgz` (and its `.sha256`) from
 [GitHub Releases](https://github.com/ban-sky/dsh-workbuddy/releases):
 
 ```sh
-dsh plugin --profile web add /path/to/ban-sky-dsh-workbuddy-0.1.2.tgz
+dsh plugin --profile web add /path/to/ban-sky-dsh-workbuddy-0.1.3.tgz
 ```
 
 Restart DSH after installing (`dsh web`). The plugin's configuration lives in the profile's `cordis.patch.yml`; the model group follows the plugin's enabled state.
@@ -160,7 +160,7 @@ workbuddy: shim listening on 127.0.0.1:<port>, gateway https://copilot.tencent.c
 
 ```sh
 npm ci
-npm test            # node:test, 54 tests
+npm test            # node:test, 55 tests
 npm run verify      # per-file syntax check
 npm run build       # dist/*.tgz + *.sha256
 ```
@@ -181,8 +181,8 @@ Test layout:
 - [`.github/workflows/release.yml`](./.github/workflows/release.yml) — on a `v*` tag, re-tests, builds, and attaches the tarball plus SHA-256 to a GitHub Release.
 
 There is no need to commit `dist/`; GitHub Actions owns release artifacts.
-The first release is [v0.1.2](https://github.com/ban-sky/dsh-workbuddy/releases/tag/v0.1.2),
-with `ban-sky-dsh-workbuddy-0.1.2.tgz` and its SHA-256 attached.
+The first release is [v0.1.3](https://github.com/ban-sky/dsh-workbuddy/releases/tag/v0.1.3),
+with `ban-sky-dsh-workbuddy-0.1.3.tgz` and its SHA-256 attached.
 
 ## License
 

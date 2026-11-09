@@ -132,6 +132,9 @@ test('save rejects a missing or unusable token', async () => {
   const control = await post(handle, { action: 'save', token: 'a\u0000b' })
   assert.equal(control.status, 400)
   assert.equal(control.body.error.code, 'INVALID_TOKEN')
+  const encrypted = await post(handle, { action: 'save', token: '{"$wbEncrypted":1,"envelope":"abc"}' })
+  assert.equal(encrypted.status, 400)
+  assert.equal(encrypted.body.error.code, 'ENCRYPTED_TOKEN')
   assert.equal(store.present(), false)
 })
 

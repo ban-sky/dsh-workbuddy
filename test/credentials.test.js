@@ -75,14 +75,36 @@ test('rejects a missing token', () => {
 })
 
 test('reports an encrypted token field instead of guessing', () => {
-  assert.throws(
-    () => parseAuthDocument({ auth: { accessToken: { ciphertext: 'x', nonce: 'y', authTag: 'z' } } }),
-    (error) => {
-      assert.ok(error instanceof CredentialError)
-      assert.equal(error.kind, 'encrypted')
-      return true
+  for (const accessToken of [
+    { ciphertext: 'x', nonce: 'y', authTag: 'z' },
+    { $wbEncrypted: 1, envelope: 'eyJzdWl0ZSI6MX0=' },
+  ]) {
+    assert.throws(
+      () => parseAuthDocument({ auth: { accessToken } }),
+      (error) => {
+        assert.ok(error instanceof CredentialError)
+        assert.equal(error.kind, 'encrypted')
+        return true
+      },
+    )
+  }
+})
+
+test('rejects a copied encrypted envelope in the manual token field', async () => {
+  const credentials = new WorkBuddyCredentials({
+    token: '{"$wbEncrypted":1,"envelope":"eyJzdWl0ZSI6MX0="}',
+    env: {},
+    platform: 'linux',
+    home: mkdtempSync(join(tmpdir(), 'dsh-workbuddy-empty-')),
+    fetch: async () => {
+      throw new Error('no network expected')
     },
-  )
+  })
+  await assert.rejects(() => credentials.headers(), (error) => {
+    assert.ok(error instanceof CredentialError)
+    assert.equal(error.kind, 'encrypted')
+    return true
+  })
 })
 
 test('finds the auth file under the Linux XDG data directory', () => {

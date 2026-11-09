@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.1.3 — 2026-11-09
+
+- Rejects a pasted `$wbEncrypted` envelope in the token field with
+  `ENCRYPTED_TOKEN` and points at browser sign-in, instead of saving a value that
+  can only produce 401.
+- Reports `$wbEncrypted` fields in a desktop auth file as encrypted (new
+  envelope shape) and refuses to send them as a bearer token.
+- 55 tests.
+
 ## 0.1.2 — 2026-11-09
 
 - Adds **browser sign-in** to the WorkBuddy settings tab: generate a login link
