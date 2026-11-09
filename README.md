@@ -26,7 +26,7 @@ The WorkBuddy chat gateway already speaks the OpenAI `chat/completions` protocol
 2. **Forwards locally** through a loopback OpenAI-compatible shim that injects fresh credentials per request, refreshes an expiring token, and retries once;
 3. **Registers the provider** through the pi-ai adapter, so streaming, native tool calls, image input, and reasoning levels work through DSH's normal agent loop.
 
-The desktop auth file is **read-only by default**, and the WorkBuddy token never enters the plugin configuration, logs, or a response body.
+The desktop auth file is **read-only by default**, and the WorkBuddy token never appears in the plugin configuration, logs, or a response body. A token pasted in the DSH settings tab is stored only in a mode-`0600` file under DSH's home directory.
 
 ## Requirements
 
@@ -46,7 +46,7 @@ A desktop install is not required in manual-token mode (see below).
 git clone https://github.com/ban-sky/dsh-workbuddy.git
 cd dsh-workbuddy
 npm ci
-npm test          # 27 tests, including a fake-gateway end-to-end run
+npm test          # 44 tests, including a fake-gateway end-to-end run
 npm run build     # dist/*.tgz + sha256
 dsh plugin --profile web add "$PWD"
 ```
@@ -58,8 +58,8 @@ tag a version with a workflow-scoped credential and download
 `ban-sky-dsh-workbuddy-*.tgz` from the created GitHub Release:
 
 ```sh
-git tag v0.1.0 && git push origin v0.1.0
-dsh plugin --profile web add /path/to/ban-sky-dsh-workbuddy-0.1.0.tgz
+git tag v0.1.1 && git push origin v0.1.1
+dsh plugin --profile web add /path/to/ban-sky-dsh-workbuddy-0.1.1.tgz
 ```
 
 Restart DSH after installing (`dsh web`). The plugin's configuration lives in the profile's `cordis.patch.yml`; the model group follows the plugin's enabled state.
@@ -95,6 +95,16 @@ Environment variables:
 
 `token` is marked secret in the config schema; prefer the environment variable when you do not want the token in YAML.
 
+### Enter the token in DSH (recommended)
+
+You do not have to edit YAML at all:
+
+1. Open **Settings → Plugins → WorkBuddy**.
+2. Paste the desktop app's `accessToken` (and optionally `uid`, `enterpriseId`, `domain`) and press **保存并连接** (Save and connect). The token is used on the next request, no restart needed.
+3. **测试连接** (Test connection) sends a one-token `ping` to the gateway and reports whether the token is accepted; **清除** (Clear) removes the saved token and falls back to the desktop auth file if one exists.
+
+The saved token lives in `$DSH_HOME/.workbuddy-credentials.json` (`~/.dsh` by default), mode `0600`, never in the profile YAML. Precedence: `token` config / `WORKBUDDY_TOKEN` → saved settings token → desktop auth file.
+
 ### Manual-token mode
 
 If the desktop auth file is encrypted with Electron `safeStorage`, or DSH runs in WSL / on another machine, copy `accessToken` (plus optional `uid` and `enterpriseId`) from the desktop app into `token` or `WORKBUDDY_TOKEN`. A manual token has no refresh token, so re-copy it when it expires.
@@ -102,8 +112,9 @@ If the desktop auth file is encrypted with Electron `safeStorage`, or DSH runs i
 ## Verify
 
 1. Open the DSH model picker after restarting: a **WorkBuddy** group with 20 models appears (GLM-5.3 family, Kimi, MiniMax, DeepSeek-V4, Hy, …).
-2. Pick a model and send "hello": it streams a normal reply.
-3. Image and tool tasks work too (the gateway supports native OpenAI tool calls).
+2. Or open **Settings → Plugins → WorkBuddy**, paste a token there and press **测试连接** — a green banner means the gateway accepted it.
+3. Pick a model and send "hello": it streams a normal reply.
+4. Image and tool tasks work too (the gateway supports native OpenAI tool calls).
 
 Without GUI access, confirm the plugin started in the DSH log:
 
@@ -125,7 +136,7 @@ workbuddy: shim listening on 127.0.0.1:<port>, gateway https://copilot.tencent.c
 
 - The shim binds **`127.0.0.1` only**, uses an ephemeral port, and requires a random per-boot bearer key.
 - The desktop auth file is read-only by default; `writeBack: true` opts in to an atomic write-back.
-- The token appears only in request headers toward the WorkBuddy gateway — never in logs, config, or response bodies.
+- The token appears only in request headers toward the WorkBuddy gateway — never in logs, config, or response bodies. The settings token is kept in a mode-`0600` JSON file under `$DSH_HOME`.
 - Conversation content is forwarded from this machine to the WorkBuddy gateway and is governed by your agreement with WorkBuddy; the plugin collects no telemetry.
 
 ## Limitations
@@ -139,7 +150,7 @@ workbuddy: shim listening on 127.0.0.1:<port>, gateway https://copilot.tencent.c
 
 ```sh
 npm ci
-npm test            # node:test, 27 tests
+npm test            # node:test, 44 tests
 npm run verify      # per-file syntax check
 npm run build       # dist/*.tgz + *.sha256
 ```
@@ -149,6 +160,8 @@ Test layout:
 - `test/credentials.test.js` — discovery, parsing, encrypted detection, single-flight refresh, headers;
 - `test/shim.test.js` — local auth, `/v1/models`, SSE passthrough, 401 refresh retry, error mapping;
 - `test/adapter.test.js` — real `PiAiAdapter` → shim → fake gateway (text, tool call, missing-credential failure);
+- `test/token-store.test.js` — atomic `0600` token store, normalization, corrupt/oversized files;
+- `test/http.test.js` — settings route actions (`status`/`save`/`clear`/`test`), envelopes, probe;
 - `test/plugin.test.js` — `apply()` route registration and the no-credential diagnostic.
 
 ## Build and release (on GitHub by default)

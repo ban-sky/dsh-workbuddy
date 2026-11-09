@@ -32,7 +32,8 @@ function fail(message) {
 
 const manifest = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
 
-for (const file of ['index.js', 'lib/catalog.js', 'lib/credentials.js', 'lib/shim.js', 'lib/adapter.js']) {
+const sources = ['index.js', 'client.js', 'lib/catalog.js', 'lib/credentials.js', 'lib/http.js', 'lib/shim.js', 'lib/adapter.js', 'lib/token-store.js']
+for (const file of sources) {
   execFileSync(process.execPath, ['--check', join(root, file)], { stdio: 'inherit' })
 }
 
@@ -53,6 +54,7 @@ if (!readFileSync(iconPath, 'utf8').includes('<svg')) fail('icon.svg is not an S
 if (statSync(iconPath).size > 256 * 1024) fail('icon.svg exceeds the 256 KiB display limit')
 
 if (manifest.dsh?.bundle?.patch !== './cordis.patch.yml') fail('package.json does not declare the bundle patch')
+if (manifest.dsh?.client?.platform !== 'web') fail('package.json does not declare the web client half')
 if (!existsSync(join(root, 'cordis.patch.yml'))) fail('cordis.patch.yml is missing')
 const shipped = (path) =>
   manifest.files.some((entry) => {
@@ -61,7 +63,7 @@ const shipped = (path) =>
     return glob !== null && path.startsWith(`${glob[1]}/`)
   })
 
-for (const required of ['index.js', 'lib/catalog.js', 'lib/credentials.js', 'lib/shim.js', 'lib/adapter.js', 'locale/zh.json', 'icon.svg', 'README.md', 'LICENSE']) {
+for (const required of [...sources, 'locale/zh.json', 'icon.svg', 'README.md', 'LICENSE']) {
   if (!shipped(required)) fail(`package.json "files" does not ship ${required}`)
 }
 

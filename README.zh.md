@@ -26,7 +26,7 @@ WorkBuddy 的聊天网关本身就是 OpenAI `chat/completions` 协议，但鉴�
 2. **本地转发**：起一个只绑定 `127.0.0.1` 的 OpenAI 兼容 shim，逐请求注入最新凭据，令牌过期时自动刷新并重试一次；
 3. **注册模型**：通过 pi-ai 适配器把模型组接进 DSH，原生支持流式输出、工具调用、图片输入与思考等级。
 
-桌面端登录文件**默认只读**；本地 shim 使用每次启动随机生成的密钥，DSH 配置、日志、响应体里都不会出现 WorkBuddy 令牌。
+桌面端登录文件**默认只读**；本地 shim 使用每次启动随机生成的密钥。WorkBuddy 令牌不会出现在 DSH 配置、日志或响应体里；在设置页粘贴的令牌只保存在 `$DSH_HOME` 下权限为 `0600` 的文件中。
 
 ## 前置条件
 
@@ -46,7 +46,7 @@ WorkBuddy 的聊天网关本身就是 OpenAI `chat/completions` 协议，但鉴�
 git clone https://github.com/ban-sky/dsh-workbuddy.git
 cd dsh-workbuddy
 npm ci
-npm test          # 27 项测试，包含本地假网关端到端
+npm test          # 44 项测试，包含本地假网关端到端
 npm run build     # 产出 dist/*.tgz 与 sha256
 dsh plugin --profile web add "$PWD"
 ```
@@ -57,8 +57,8 @@ dsh plugin --profile web add "$PWD"
 再从 GitHub Release 下载 `ban-sky-dsh-workbuddy-*.tgz`：
 
 ```sh
-git tag v0.1.0 && git push origin v0.1.0
-dsh plugin --profile web add /path/to/ban-sky-dsh-workbuddy-0.1.0.tgz
+git tag v0.1.1 && git push origin v0.1.1
+dsh plugin --profile web add /path/to/ban-sky-dsh-workbuddy-0.1.1.tgz
 ```
 
 安装后重启 DSH（`dsh web`）。插件配置保存在 profile 的 `cordis.patch.yml` 里，模型组随插件启用。
@@ -94,6 +94,16 @@ dsh plugin --profile web add /path/to/ban-sky-dsh-workbuddy-0.1.0.tgz
 
 `token` 在配置里标记为 secret；如果不想把令牌写进 YAML，优先使用环境变量。
 
+### 在 DSH 设置页填写令牌（推荐）
+
+不必手改 YAML：
+
+1. 打开 **设置 → 插件 → WorkBuddy**；
+2. 粘贴桌面端的 `accessToken`（可选填 `uid`、`enterpriseId`、`domain`），点 **保存并连接**。下一次请求立即生效，无需重启；
+3. **测试连接** 会向网关发送一个 1 token 的 `ping`，直接判断令牌是否被接受；**清除** 会删除已保存的令牌，并回退到桌面端登录文件（如果存在）。
+
+令牌保存在 `$DSH_HOME/.workbuddy-credentials.json`（默认 `~/.dsh`），权限 `0600`，不会写进 profile YAML。优先级：配置 `token` / `WORKBUDDY_TOKEN` → 设置页保存的令牌 → 桌面端登录文件。
+
 ### 手动 token 模式
 
 登录文件被 Electron `safeStorage` 加密、或 DSH 跑在 WSL / 另一台机器时，从桌面端复制 `accessToken`（以及可选的 `uid`、`enterpriseId`）填入 `token` / 环境变量即可。令牌过期后需要重新复制（手动模式没有 refreshToken）。
@@ -101,8 +111,9 @@ dsh plugin --profile web add /path/to/ban-sky-dsh-workbuddy-0.1.0.tgz
 ## 验证
 
 1. 重启 DSH 后打开模型选择器，应出现 **WorkBuddy** 分组（20 个模型：GLM-5.3 系列、Kimi、MiniMax、DeepSeek-V4、Hy 等）；
-2. 选一个模型发一句「你好」，应能正常流式回复；
-3. 带图或带工具的任务也应工作（网关原生支持 OpenAI 工具调用）。
+2. 或打开 **设置 → 插件 → WorkBuddy**，粘贴令牌后点 **测试连接**：绿色提示表示网关已接受该令牌；
+3. 选一个模型发一句「你好」，应能正常流式回复；
+4. 带图或带工具的任务也应工作（网关原生支持 OpenAI 工具调用）。
 
 无法使用 GUI 时，查看 DSH 日志里这一行确认插件已启动：
 
@@ -124,7 +135,7 @@ workbuddy: shim listening on 127.0.0.1:<port>, gateway https://copilot.tencent.c
 
 - 本地 shim **只监听 `127.0.0.1`**，使用每次启动随机生成的 Bearer 密钥；端口随机。
 - 登录文件默认只读；`writeBack: true` 才会原子写回（用于无桌面端常驻的场景）。
-- 令牌只出现在发往 WorkBuddy 网关的请求头里；不写日志、不进配置、不进响应体。
+- 令牌只出现在发往 WorkBuddy 网关的请求头里；不写日志、不进配置、不进响应体。设置页保存的令牌存放在 `$DSH_HOME` 下权限 `0600` 的 JSON 文件中。
 - 对话内容经本机转发到 WorkBuddy 网关，处理规则遵循你与 WorkBuddy 的协议；插件本身不收集遥测。
 
 ## 限制
@@ -138,7 +149,7 @@ workbuddy: shim listening on 127.0.0.1:<port>, gateway https://copilot.tencent.c
 
 ```sh
 npm ci
-npm test            # node:test，27 项
+npm test            # node:test，44 项
 npm run verify      # 逐个文件语法检查
 npm run build       # dist/*.tgz + *.sha256
 ```
@@ -148,6 +159,8 @@ npm run build       # dist/*.tgz + *.sha256
 - `test/credentials.test.js` — 登录文件发现/解析/加密检测/刷新单飞/请求头；
 - `test/shim.test.js` — 本地 shim 的鉴权、`/v1/models`、SSE 透传、401 刷新重试、错误映射；
 - `test/adapter.test.js` — 真实的 `PiAiAdapter` → shim → 假网关端到端（文本、工具调用、无凭据失败）；
+- `test/token-store.test.js` — 原子写入、`0600` 权限、规范化、损坏/超大文件处理；
+- `test/http.test.js` — 设置路由的 `status`/`save`/`clear`/`test` 动作、错误信封、连通探测；
 - `test/plugin.test.js` — `apply()` 注册路由与无凭据诊断。
 
 ## 构建与发布（默认在 GitHub）

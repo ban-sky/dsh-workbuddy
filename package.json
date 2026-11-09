@@ -1,6 +1,6 @@
 {
   "name": "@ban-sky/dsh-workbuddy",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "WorkBuddy desktop app models inside DeepSeek Harness — reuses the signed-in WorkBuddy / CodeBuddy desktop account and exposes its models as a DSH model provider.",
   "type": "module",
   "engines": {
@@ -9,6 +9,7 @@
   "main": "index.js",
   "exports": {
     ".": "./index.js",
+    "./client": "./client.js",
     "./lib/*.js": "./lib/*.js",
     "./cordis.patch.yml": "./cordis.patch.yml",
     "./locale/*.json": "./locale/*.json",
@@ -17,6 +18,7 @@
   },
   "files": [
     "index.js",
+    "client.js",
     "lib/*.js",
     "cordis.patch.yml",
     "locale/*.json",
@@ -39,11 +41,22 @@
     "test": "node --test test/*.test.js",
     "test:watch": "node --test --watch test/*.test.js",
     "build": "node scripts/build.mjs",
-    "verify": "node --check index.js && node --check lib/catalog.js && node --check lib/credentials.js && node --check lib/shim.js && node --check lib/adapter.js"
+    "verify": "node --check index.js && node --check client.js && node --check lib/catalog.js && node --check lib/credentials.js && node --check lib/http.js && node --check lib/shim.js && node --check lib/adapter.js && node --check lib/token-store.js"
   },
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
+    },
+    "manifestVersion": 1,
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-locale",
+        "@deepseek-ai/dsh-client-ui-slots",
+        "@deepseek-ai/dsh-client-ui-settings",
+        "@deepseek-ai/dsh-client-ui-plugin-manager"
+      ]
     }
   },
   "dependencies": {

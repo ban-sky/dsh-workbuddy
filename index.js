@@ -23,6 +23,8 @@ import { WORKBUDDY_MODELS } from './lib/catalog.js'
 import { WorkBuddyCredentials } from './lib/credentials.js'
 import { createWorkBuddyAdapter } from './lib/adapter.js'
 import { startShim } from './lib/shim.js'
+import { createWorkBuddyHandler, ROUTE_PATH } from './lib/http.js'
+import { defaultTokenStorePath, TokenStore } from './lib/token-store.js'
 
 /** Cordis services this plugin needs before it activates. */
 export const inject = ['llm']
@@ -85,6 +87,10 @@ export async function apply(ctx, config) {
     ...config,
   }
 
+  const tokenStore = new TokenStore({
+    path: defaultTokenStorePath(),
+    onWarning: (message) => ctx.logger.warn(`workbuddy: ${message}`),
+  })
   const credentials = new WorkBuddyCredentials({
     authFile: cfg.authFile,
     token: cfg.token,
@@ -94,6 +100,7 @@ export async function apply(ctx, config) {
     baseURL: cfg.baseURL,
     region: cfg.region,
     writeBack: cfg.writeBack,
+    savedStore: tokenStore,
     onWarning: (message) => ctx.logger.warn(`workbuddy: ${message}`),
   })
 
@@ -128,6 +135,24 @@ export async function apply(ctx, config) {
         (hostPath) => ctx.get('fs')?.processPathFromHostPath?.(hostPath),
         ref,
       ),
+  })
+
+  ctx.inject(['connection'], (child) => {
+    child.effect(
+      () =>
+        child.connection.fetch.register({
+          path: ROUTE_PATH,
+          methods: ['POST'],
+          requestBody: 'buffered',
+          fetch: createWorkBuddyHandler({
+            credentials,
+            tokenStore,
+            modelCount: WORKBUDDY_MODELS.length,
+            onWarning: (message) => ctx.logger.warn(`workbuddy: ${message}`),
+          }),
+        }),
+      'dsh-workbuddy: settings route',
+    )
   })
 
   ctx.effect(() => ctx.llm.registerAdapter([PROVIDER_ID], adapter), 'dsh-workbuddy: model provider')

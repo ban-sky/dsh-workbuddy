@@ -17,7 +17,7 @@ import { startFakeWorkBuddy } from './support/fake-workbuddy.js'
  * @returns {{ ctx: any, state: { registered?: any, effects: Array<() => void>, warnings: string[] } }} Test context.
  */
 function stubContext() {
-  const state = { registered: undefined, effects: [], warnings: [] }
+  const state = { registered: undefined, effects: [], warnings: [], route: undefined }
   const ctx = {
     logger: {
       info() {},
@@ -39,6 +39,18 @@ function stubContext() {
         return () => {}
       },
     },
+    inject(dependencies, callback) {
+      const child = Object.create(ctx)
+      child.connection = {
+        fetch: {
+          register(route) {
+            state.route = route
+            return () => {}
+          },
+        },
+      }
+      callback(child)
+    },
   }
   return { ctx, state }
 }
@@ -54,6 +66,8 @@ test('apply registers the workbuddy route with the full catalog', async () => {
       baseURL: upstream.url,
     })
     assert.ok(state.registered, 'an adapter was registered')
+    assert.equal(state.route?.path, '/api/workbuddy')
+    assert.deepEqual(state.route?.methods, ['POST'])
     assert.deepEqual(state.registered.routes, ['workbuddy'])
     const models = await state.registered.adapter.listModels('workbuddy')
     assert.equal(models.length, WORKBUDDY_MODELS.length)
@@ -70,6 +84,11 @@ test('apply registers the workbuddy route with the full catalog', async () => {
 test('apply still loads and warns when no credential exists', async () => {
   const upstream = await startFakeWorkBuddy()
   const { ctx, state } = stubContext()
+  // Keep the developer's real saved token out of this test: the store lives in
+  // $DSH_HOME and would otherwise count as a credential.
+  const dshHome = mkdtempSync(join(tmpdir(), 'dsh-workbuddy-home-'))
+  const previousHome = process.env.DSH_HOME
+  process.env.DSH_HOME = dshHome
   try {
     await apply(ctx, {
       env: {},
@@ -83,6 +102,8 @@ test('apply still loads and warns when no credential exists', async () => {
       'a missing credential produces a diagnostic',
     )
   } finally {
+    if (previousHome === undefined) delete process.env.DSH_HOME
+    else process.env.DSH_HOME = previousHome
     for (const dispose of state.effects.reverse()) {
       if (typeof dispose === 'function') await dispose()
       else if (typeof dispose?.dispose === 'function') await dispose.dispose()

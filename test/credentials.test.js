@@ -7,6 +7,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
+import { TokenStore } from '../lib/token-store.js'
 import {
   CredentialError,
   WorkBuddyCredentials,
@@ -228,4 +229,37 @@ test('reports missing credentials without throwing from status()', async () => {
   })
   assert.equal(credentials.status().signedIn, false)
   await assert.rejects(credentials.headers(), (error) => error.kind === 'missing')
+})
+
+test('a token saved from the settings page wins over the desktop file', () => {
+  const { home } = makeHome({
+    auth: {
+      accessToken: 'desktop-token',
+      refreshToken: 'desktop-refresh',
+      expiresAt: Math.floor(Date.now() / 1000) + 3600,
+      domain: 'www.codebuddy.cn',
+    },
+    account: { uid: 'desktop-user', enterpriseId: 'desktop-enterprise' },
+  })
+  const savedStore = new TokenStore({ path: join(home, 'saved-token.json') })
+  savedStore.save({ token: 'saved-token', uid: 'saved-user', enterpriseId: 'saved-enterprise' })
+  const credentials = new WorkBuddyCredentials({ home, platform: 'linux', env: {}, savedStore })
+  const loaded = credentials.load()
+  assert.equal(loaded?.accessToken, 'saved-token')
+  assert.equal(loaded?.uid, 'saved-user')
+  assert.equal(loaded?.enterpriseId, 'saved-enterprise')
+  assert.equal(credentials.status().source, 'saved')
+  savedStore.clear()
+  credentials.reload()
+  assert.equal(credentials.load()?.accessToken, 'desktop-token')
+  assert.equal(credentials.status().source, 'file')
+})
+
+test('an explicit config token still beats a saved token', () => {
+  const { home } = makeHome({ auth: { accessToken: 'desktop-token' } })
+  const savedStore = new TokenStore({ path: join(home, 'saved-token.json') })
+  savedStore.save({ token: 'saved-token' })
+  const credentials = new WorkBuddyCredentials({ home, platform: 'linux', env: {}, token: 'config-token', savedStore })
+  assert.equal(credentials.load()?.accessToken, 'config-token')
+  assert.equal(credentials.status().source, 'token')
 })

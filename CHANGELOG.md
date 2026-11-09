@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.1 — 2026-11-09
+
+- Adds **Settings → Plugins → WorkBuddy**: paste an accessToken (plus optional
+  uid / enterpriseId / domain), save and connect without editing YAML, test the
+  credential, and clear it again. The token is stored in
+  `$DSH_HOME/.workbuddy-credentials.json` with mode `0600` and never returned by
+  the Host route.
+- Credential precedence: config `token` / `WORKBUDDY_TOKEN` → saved settings
+  token → desktop auth file. Clearing the saved token falls back to the file.
+- The connection test now sends the smallest possible chat completion, because
+  the gateway's `/v3/config` answers without authentication and could not tell a
+  valid token from an invalid one.
+- 44 tests (token store, settings HTTP actions, probe, saved-token precedence).
+
 ## 0.1.0 — 2026-11-09
 
 First release.
