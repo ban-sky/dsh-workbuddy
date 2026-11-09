@@ -41,6 +41,9 @@ jobs:
           tar -tzf dist/*.tgz | grep -q 'package/cordis.patch.yml'
           tar -tzf dist/*.tgz | grep -q 'package/locale/zh.json'
           tar -tzf dist/*.tgz | grep -q 'package/icon.svg'
+          tar -tzf dist/*.tgz | grep -q 'package/client.js'
+          tar -tzf dist/*.tgz | grep -q 'package/lib/http.js'
+          tar -tzf dist/*.tgz | grep -q 'package/lib/token-store.js'
 
       - uses: actions/upload-artifact@v4
         with:
