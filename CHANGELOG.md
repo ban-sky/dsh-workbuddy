@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.6.0 — 2026-11-10
+
+- **The icon is monochrome.** `icon.svg`, the rail glyph, and the page mark
+  are now a single line-art W drawn with `currentColor` (rounded square outline
+  plus a stroke-only W and a solid dot), so the mark inherits the theme instead
+  of carrying its own blue→indigo→violet gradient.
+- **The page is a card grid.** Cards render in the order **账号 → 连接 → 模型**.
+  The accounts card keeps the account list and the credit balance; the
+  connection card now holds the status table, the connection test, the storage
+  note, and browser sign-in (the separate sign-in card is gone); the models card
+  spans the full row with the catalog table.
+- **Responsive grid.** `.wb-cards` is a two-column grid on wide viewports and
+  collapses to a single column at 860px, so desktops show at most two cards per
+  row and phones show one. The models card opts into `grid-column: 1 / -1`.
+- **Typography pass.** 22px/30px page title with tighter tracking, 14px/22px
+  semibold card titles with count pills, 13px/21px row titles, 12px/19px hints,
+  11px table headers, tabular numerals for credits, a 28px metric value, and a
+  consistent 8–16px spacing rhythm. Card headers are borderless when collapsed
+  and gain a hairline only when open.
+- The connection card keeps a 12px section label (`connection → browser sign-in`)
+  so the folded-in sign-in block stays legible.
+
 ## 0.5.0 — 2026-11-10
 
 - **The panel moved from Settings into the left sidebar.** It now registers a

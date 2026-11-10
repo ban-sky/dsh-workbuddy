@@ -18,9 +18,10 @@ window.__ModuleLoader__.load({
       title: 'WorkBuddy',
       subtitle: '在 DSH 中直接使用 WorkBuddy / CodeBuddy 账号的模型',
       secAccounts: '账号',
+      secConnection: '连接',
       secLogin: '浏览器登录',
-      secModels: '模型与计费',
-      secStatus: '连接状态',
+      secModels: '模型',
+      accountsUnit: '个账号',
       active: '当前',
       switchTo: '切换',
       rename: '重命名',
@@ -97,9 +98,10 @@ window.__ModuleLoader__.load({
       title: 'WorkBuddy',
       subtitle: 'Use WorkBuddy / CodeBuddy account models inside DSH',
       secAccounts: 'Accounts',
+      secConnection: 'Connection',
       secLogin: 'Browser sign-in',
-      secModels: 'Models & billing',
-      secStatus: 'Connection',
+      secModels: 'Models',
+      accountsUnit: 'accounts',
       active: 'active',
       switchTo: 'Switch',
       rename: 'Rename',
@@ -234,46 +236,51 @@ window.__ModuleLoader__.load({
     }
 
     const CSS = `
-.wb-page{width:100%;min-width:0;height:100%;min-height:0;display:flex;overflow:hidden;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);font-size:14px;line-height:1.6}
+.wb-page{width:100%;min-width:0;height:100%;min-height:0;display:flex;overflow:hidden;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
 .wb-scroll{flex:1;min-width:0;min-height:0;overflow:auto;scrollbar-gutter:stable;--dsh-scrollbar-width:9px;--dsh-scrollbar-thumb-border:2px}
-.wb-content{max-width:960px;margin:0 auto;padding:0 clamp(24px,4vw,48px) 48px}
-@media(max-width:640px){.wb-content{padding:0 16px 32px}}
-.wb-heading{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;margin-bottom:24px;padding-top:28px}
-[data-platform=darwin] .wb-heading{padding-top:calc(28px + var(--dsh-frame-top-clearance,0px))}
-.wb-heading-main{display:flex;align-items:center;gap:12px;min-width:0}
+.wb-content{max-width:1040px;margin:0 auto;padding:0 clamp(20px,3.4vw,44px) 56px}
+@media(max-width:640px){.wb-content{padding:0 16px 40px}}
+.wb-heading{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:14px 20px;margin-bottom:22px;padding-top:30px}
+[data-platform=darwin] .wb-heading{padding-top:calc(30px + var(--dsh-frame-top-clearance,0px))}
+.wb-heading-main{display:flex;align-items:center;gap:14px;min-width:0}
+.wb-mark{width:40px;height:40px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:12px;background:var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.05));color:var(--dsw-alias-label-primary)}
 .wb-heading-text{min-width:0}
-.wb-heading h1{margin:0;font-size:20px;font-weight:500;line-height:28px}
-.wb-heading p{margin:2px 0 0;font-size:13px;line-height:21px;color:var(--dsw-alias-label-secondary)}
-.wb-mark{width:34px;height:34px;flex:none;border-radius:10px;box-shadow:0 2px 8px rgba(60,92,255,.22)}
-.wb-heading-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wb-heading h1{margin:0;font-size:22px;font-weight:600;line-height:30px;letter-spacing:-.015em}
+.wb-heading p{margin:3px 0 0;font-size:13px;line-height:20px;color:var(--dsw-alias-label-secondary)}
+.wb-heading-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:4px}
 .wb-badge{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 11px;border-radius:999px;font-size:12px;line-height:1;font-weight:500;background:var(--dsw-alias-bg-success,rgba(46,160,67,.12));color:var(--dsw-alias-label-success,#17663a);white-space:nowrap}
-.wb-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+.wb-badge::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
 .wb-badge-off{background:var(--dsw-alias-bg-warning,rgba(191,120,0,.12));color:var(--dsw-alias-label-warning,#8a5a00)}
 .wb-banner{margin:0 0 16px;padding:10px 14px;border-radius:12px;font-size:13px;line-height:21px;word-break:break-word}
 .wb-banner-ok{background:var(--dsw-alias-bg-success,rgba(46,160,67,.1));color:var(--dsw-alias-label-success,#17663a)}
 .wb-banner-error{background:var(--dsw-alias-bg-danger,rgba(229,72,77,.1));color:var(--dsw-alias-label-danger,#b42318)}
-.wb-card{border:.5px solid var(--dsw-alias-border-l3);border-radius:16px;margin-bottom:16px;overflow:hidden;background:var(--dsw-alias-bg-base)}
-.wb-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;min-height:52px;padding:8px 16px}
-.wb-card-toggle{appearance:none;border:0;background:none;padding:4px 0;display:flex;align-items:center;gap:10px;cursor:pointer;color:inherit;font:inherit;text-align:left;border-radius:8px}
-.wb-card-toggle:focus-visible{outline:2px solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:2px}
-.wb-chevron{width:12px;height:12px;flex:none;color:var(--dsw-alias-label-tertiary);transition:transform .15s ease}
+.wb-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+.wb-card-wide{grid-column:1/-1}
+@media(max-width:860px){.wb-cards{grid-template-columns:minmax(0,1fr)}}
+.wb-card{min-width:0;border:.5px solid var(--dsw-alias-border-l3);border-radius:16px;background:var(--dsw-alias-bg-base);overflow:hidden}
+.wb-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:50px;padding:11px 16px;border-bottom:.5px solid var(--dsw-alias-border-l4)}
+.wb-card-close .wb-card-head{border-bottom-color:transparent}
+.wb-card-titles{display:flex;align-items:center;gap:9px;min-width:0;padding:2px 4px 2px 0;margin:-2px 0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;border-radius:8px}
+.wb-card-titles:focus-visible{outline:2px solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:2px}
+.wb-card-title{font-size:14px;font-weight:600;line-height:22px;white-space:nowrap}
+.wb-card-sub{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;background:var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.05));color:var(--dsw-alias-label-tertiary);font-size:11px;line-height:1;font-weight:500;white-space:nowrap;font-variant-numeric:tabular-nums}
+.wb-chevron{width:11px;height:11px;flex:none;color:var(--dsw-alias-label-tertiary);transition:transform .15s ease}
 .wb-chevron-open{transform:rotate(90deg)}
-.wb-card-title{font-size:14px;font-weight:500;line-height:22px}
-.wb-card-sub{font-size:12px;line-height:20px;color:var(--dsw-alias-label-tertiary);white-space:nowrap}
-.wb-card-body{padding:0 16px 16px;display:flex;flex-direction:column;gap:4px}
+.wb-card-body{display:flex;flex-direction:column;gap:12px;padding:14px 16px 16px}
 .wb-card-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.wb-row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;padding:8px 0;border-top:.5px solid var(--dsw-alias-border-l4)}
-.wb-row:first-child{border-top:0}
+.wb-rows{display:flex;flex-direction:column;gap:8px}
+.wb-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 12px;border:.5px solid var(--dsw-alias-border-l4);border-radius:12px}
+.wb-row-active{border-color:var(--dsw-alias-state-business-primary)}
 .wb-row-main{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
-.wb-row-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;line-height:22px;font-weight:500}
+.wb-row-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;font-weight:600;line-height:21px}
 .wb-row-title-text{overflow-wrap:anywhere}
-.wb-row-sub{font-size:12px;line-height:20px;color:var(--dsw-alias-label-tertiary);overflow-wrap:anywhere}
-.wb-row-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;flex:none}
+.wb-row-sub{font-size:12px;line-height:18px;color:var(--dsw-alias-label-tertiary);overflow-wrap:anywhere}
+.wb-row-actions{display:flex;align-items:center;gap:4px;flex-wrap:wrap;flex:none}
 .wb-chip{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:6px;font-size:11px;line-height:1;font-weight:500;white-space:nowrap;background:var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.05));color:var(--dsw-alias-label-secondary)}
 .wb-chip-accent{background:var(--dsw-alias-state-business-primary,#4b6bff);color:#fff}
 .wb-chip-warn{background:var(--dsw-alias-bg-warning,rgba(191,120,0,.14));color:var(--dsw-alias-label-warning,#8a5a00)}
 .wb-chip-solid{color:#fff}
-.wb-btn{appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:30px;padding:0 12px;border-radius:9px;border:.5px solid var(--dsw-alias-border-l3);background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:13px;line-height:1;cursor:pointer;white-space:nowrap}
+.wb-btn{appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:30px;padding:0 12px;border-radius:9px;border:.5px solid var(--dsw-alias-border-l3);background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:13px;line-height:1;cursor:pointer;white-space:nowrap;transition:background .12s ease,opacity .12s ease}
 .wb-btn:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}
 .wb-btn:focus-visible{outline:2px solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:2px}
 .wb-btn:disabled{opacity:.45;cursor:default}
@@ -281,46 +288,52 @@ window.__ModuleLoader__.load({
 .wb-btn-primary:hover:not(:disabled){background:var(--dsw-alias-button-primary-fill,#24292f);opacity:.9}
 .wb-btn-danger{border-color:transparent;background:var(--dsw-alias-interactive-bg-hover-danger,rgba(229,72,77,.12));color:var(--dsw-alias-label-danger,#b42318)}
 .wb-btn-ghost{border-color:transparent;color:var(--dsw-alias-label-secondary)}
-.wb-credits{display:flex;flex-direction:column;gap:10px;margin-top:8px;padding-top:16px;border-top:.5px solid var(--dsw-alias-border-l3)}
+.wb-btn-sm{height:26px;padding:0 10px;font-size:12px}
+.wb-sub{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:2px;padding-top:13px;border-top:.5px solid var(--dsw-alias-border-l4)}
+.wb-sub-title{font-size:12px;font-weight:600;line-height:18px;color:var(--dsw-alias-label-secondary)}
+.wb-kv{display:flex;flex-direction:column}
+.wb-kv-row{display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding:7px 0;border-bottom:.5px solid var(--dsw-alias-border-l4)}
+.wb-kv-row:last-child{border-bottom:0;padding-bottom:0}
+.wb-kv-row:first-child{padding-top:0}
+.wb-kv-key{flex:none;font-size:12px;line-height:18px;color:var(--dsw-alias-label-tertiary)}
+.wb-kv-value{min-width:0;text-align:right;font-size:13px;line-height:20px;overflow-wrap:anywhere}
+.wb-metric{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
+.wb-metric-value{font-size:28px;font-weight:600;line-height:1.15;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.wb-metric-unit{font-size:12px;line-height:18px;color:var(--dsw-alias-label-tertiary)}
+.wb-credits{display:flex;flex-direction:column;gap:12px;padding-top:13px;border-top:.5px solid var(--dsw-alias-border-l4)}
 .wb-credits-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.wb-credit-total{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
-.wb-credit-number{font-size:30px;font-weight:600;line-height:1.1;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
-.wb-credit-unit{font-size:12px;color:var(--dsw-alias-label-tertiary)}
-.wb-credit-list{display:flex;flex-direction:column;gap:14px}
-.wb-credit-row{display:flex;flex-direction:column;gap:6px}
+.wb-credit-list{display:flex;flex-direction:column;gap:13px}
+.wb-credit-row{display:flex;flex-direction:column;gap:5px}
 .wb-credit-row-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
-.wb-credit-name{font-size:13px;line-height:20px;overflow-wrap:anywhere}
-.wb-credit-count{font-size:12px;color:var(--dsw-alias-label-secondary);font-variant-numeric:tabular-nums;white-space:nowrap}
-.wb-credit-meta{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;line-height:18px;color:var(--dsw-alias-label-tertiary)}
-.wb-bar{height:6px;border-radius:999px;background:var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.07));overflow:hidden}
+.wb-credit-name{font-size:12px;line-height:19px;overflow-wrap:anywhere}
+.wb-credit-count{font-size:12px;line-height:19px;color:var(--dsw-alias-label-secondary);font-variant-numeric:tabular-nums;white-space:nowrap}
+.wb-credit-meta{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;line-height:17px;color:var(--dsw-alias-label-tertiary)}
+.wb-bar{height:5px;border-radius:999px;background:var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.07));overflow:hidden}
 .wb-bar-fill{height:100%;border-radius:999px;background:var(--dsw-alias-state-business-primary,#4b6bff);transition:width .2s ease}
-.wb-hint{margin:0;font-size:12px;line-height:20px;color:var(--dsw-alias-label-tertiary)}
-.wb-empty{padding:24px 0;text-align:center;font-size:13px;color:var(--dsw-alias-label-tertiary)}
-.wb-login{display:flex;flex-direction:column;gap:10px;padding-top:4px}
-.wb-login-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.wb-label{font-size:13px;line-height:20px;color:var(--dsw-alias-label-secondary)}
+.wb-hint{margin:0;font-size:12px;line-height:19px;color:var(--dsw-alias-label-tertiary)}
+.wb-empty{margin:0;padding:22px 0;text-align:center;font-size:13px;line-height:21px;color:var(--dsw-alias-label-tertiary)}
+.wb-login{display:flex;flex-direction:column;gap:9px}
+.wb-login-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wb-label{font-size:12px;line-height:18px;color:var(--dsw-alias-label-secondary)}
 .wb-select{height:30px;padding:0 8px;border-radius:9px;border:.5px solid var(--dsw-alias-border-l3);background:var(--dsw-alias-bg-base);color:inherit;font:inherit;font-size:13px}
 .wb-select:focus-visible{outline:2px solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:2px}
 .wb-link{display:inline-flex;align-items:center;height:30px;padding:0 12px;border-radius:9px;background:var(--dsw-alias-button-primary-fill,#24292f);color:var(--dsw-alias-button-primary-label,#fff);font-size:13px;text-decoration:none;white-space:nowrap}
 .wb-link:hover{opacity:.9}
-.wb-code{font-family:var(--dsw-font-mono,ui-monospace,SFMono-Regular,Menlo,monospace);font-size:11px;color:var(--dsw-alias-label-tertiary);word-break:break-all;min-width:0}
+.wb-code{font-family:var(--dsw-font-mono,ui-monospace,SFMono-Regular,Menlo,monospace);font-size:11px;line-height:17px;color:var(--dsw-alias-label-tertiary);word-break:break-all;min-width:0}
 .wb-mono{font-family:var(--dsw-font-mono,ui-monospace,SFMono-Regular,Menlo,monospace);font-size:12px;overflow-wrap:anywhere}
-.wb-table-wrap{overflow:auto;max-height:420px;margin:0 -16px;padding:0 16px}
-.wb-table{width:100%;border-collapse:collapse;font-size:13px;min-width:600px}
-.wb-table th{position:sticky;top:0;z-index:1;text-align:left;font-weight:500;font-size:12px;line-height:20px;color:var(--dsw-alias-label-tertiary);background:var(--dsw-alias-bg-base);padding:8px 10px 8px 0;border-bottom:.5px solid var(--dsw-alias-border-l3);white-space:nowrap}
-.wb-table td{padding:10px 10px 10px 0;border-bottom:.5px solid var(--dsw-alias-border-l4);vertical-align:middle}
+.wb-table-wrap{overflow:auto;margin:0 -16px;padding:0 16px}
+.wb-table{width:100%;border-collapse:collapse;font-size:13px;min-width:520px}
+.wb-table th{position:sticky;top:0;z-index:1;text-align:left;font-weight:500;font-size:11px;line-height:17px;letter-spacing:.01em;color:var(--dsw-alias-label-tertiary);background:var(--dsw-alias-bg-base);padding:8px 10px 8px 0;border-bottom:.5px solid var(--dsw-alias-border-l3);white-space:nowrap}
+.wb-table td{padding:9px 10px 9px 0;border-bottom:.5px solid var(--dsw-alias-border-l4);vertical-align:middle}
 .wb-table tr:last-child td{border-bottom:0}
-.wb-model-cell{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:160px}
+.wb-model-cell{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:150px}
 .wb-model-text{display:flex;flex-direction:column;gap:1px;min-width:0}
-.wb-model-name{font-size:13px;line-height:20px}
+.wb-model-name{font-size:13px;line-height:20px;font-weight:500}
 .wb-model-id{font-size:11px;line-height:16px;color:var(--dsw-alias-label-tertiary)}
 .wb-chips{display:flex;gap:4px;flex-wrap:wrap}
-.wb-promo-cell{display:flex;flex-direction:column;gap:4px;min-width:150px}
-.wb-promo-text{font-size:11px;line-height:18px;color:var(--dsw-alias-label-tertiary)}
-.wb-grid{display:grid;grid-template-columns:140px minmax(0,1fr);gap:10px 16px;padding:6px 0;font-size:13px;line-height:21px}
-@media(max-width:520px){.wb-grid{grid-template-columns:110px minmax(0,1fr)}}
-.wb-key{color:var(--dsw-alias-label-tertiary)}
-.wb-value{min-width:0;overflow-wrap:anywhere}
+.wb-promo-cell{display:flex;flex-direction:column;gap:3px;min-width:130px}
+.wb-promo-text{font-size:11px;line-height:17px;color:var(--dsw-alias-label-tertiary)}
+
 `
 
     /** Chevron used inside collapsible card headers. */
@@ -342,15 +355,18 @@ window.__ModuleLoader__.load({
     }
 
     /**
-     * Collapsible card, in the app's own list-card idiom.
+     * One card in the panel grid. The whole title area toggles it.
      *
-     * @param {{ title: string, subtitle?: string, open: boolean, onToggle: Function, actions?: Array<any>, children?: Array<any> }} props - Props.
+     * @param {{ title: string, subtitle?: string, wide?: boolean, open: boolean, onToggle: Function, actions?: Array<any>, children?: Array<any> }} props - Props.
      * @returns {any} Element.
      */
-    function Card({ title, subtitle, open, onToggle, actions, children }) {
+    function Card({ title, subtitle, wide, open, onToggle, actions, children }) {
+      const classes = ['wb-card']
+      if (wide === true) classes.push('wb-card-wide')
+      if (open !== true) classes.push('wb-card-close')
       return h(
         'section',
-        { className: 'wb-card' },
+        { className: classes.join(' ') },
         h(
           'div',
           { className: 'wb-card-head' },
@@ -358,13 +374,13 @@ window.__ModuleLoader__.load({
             'button',
             {
               type: 'button',
-              className: 'wb-card-toggle',
+              className: 'wb-card-titles',
               'aria-expanded': open ? 'true' : 'false',
               onClick: onToggle,
             },
             h('span', { className: open ? 'wb-chevron wb-chevron-open' : 'wb-chevron' }, chevron()),
             h('span', { className: 'wb-card-title' }, title),
-            subtitle ? h('span', { className: 'wb-card-sub' }, subtitle) : null,
+            subtitle !== undefined && subtitle !== '' ? h('span', { className: 'wb-card-sub' }, subtitle) : null,
           ),
           actions !== undefined && actions.length > 0 ? h('div', { className: 'wb-card-actions' }, ...actions) : null,
         ),
@@ -388,7 +404,7 @@ window.__ModuleLoader__.load({
       const [credits, setCredits] = useState(null)
       const [creditsBusy, setCreditsBusy] = useState(false)
       const [creditsError, setCreditsError] = useState('')
-      const [open, setOpen] = useState({ accounts: true, login: false, models: false, status: false })
+      const [open, setOpen] = useState({ accounts: true, connection: true, models: false })
       const [login, setLogin] = useState(null)
       const [loginRegion, setLoginRegion] = useState('cn')
       const [catalog, setCatalog] = useState(null)
@@ -728,7 +744,7 @@ window.__ModuleLoader__.load({
         )
         return h(
           'div',
-          { key: account.id, className: 'wb-row' },
+          { key: account.id, className: account.active ? 'wb-row wb-row-active' : 'wb-row' },
           h(
             'div',
             { className: 'wb-row-main' },
@@ -828,9 +844,9 @@ window.__ModuleLoader__.load({
               { className: 'wb-credits-head' },
               h(
                 'div',
-                { className: 'wb-credit-total' },
-                h('span', { className: 'wb-credit-number' }, credits === null ? '—' : String(credits.total)),
-                h('span', { className: 'wb-credit-unit' }, tr('creditsUnit')),
+                { className: 'wb-metric' },
+                h('span', { className: 'wb-metric-value' }, credits === null ? '—' : String(credits.total)),
+                h('span', { className: 'wb-metric-unit' }, tr('creditsUnit')),
                 credits !== null && credits.expiringSoon === true
                   ? h('span', { className: 'wb-chip wb-chip-warn' }, tr('creditsExpiring'))
                   : null,
@@ -870,21 +886,33 @@ window.__ModuleLoader__.load({
               : null,
           )
 
+      const statusPairs = [
+        [tr('state'), status === null ? '' : status.signedIn ? tr('signedIn') : tr('notSignedIn'), false],
+        [tr('source'), status === null ? '' : status.saved === true ? tr('sourceSaved') : tr('sourceNone'), false],
+        [tr('account'), status === null || status.uid === '' ? null : status.uid, true],
+        [tr('expiry'), expiry, false],
+        [tr('gateway'), status === null ? '' : status.baseURL, true],
+        [tr('models'), status === null ? '' : String(status.modelCount ?? 0), false],
+      ].filter((pair) => pair[1] !== null)
+
       const accountsBody = [
         accounts === null
           ? h('p', { className: 'wb-empty' }, tr('loading'))
           : accounts.accounts.length === 0
             ? h('p', { className: 'wb-empty' }, tr('accountsEmpty'))
-            : h('div', null, ...accountRows),
+            : h('div', { className: 'wb-rows' }, ...accountRows),
         h(
           'div',
-          { className: 'wb-card-actions', style: { marginTop: '8px' } },
+          { className: 'wb-card-actions' },
           h(
             'button',
             {
               type: 'button',
               className: 'wb-btn wb-btn-primary',
-              onClick: () => setOpen((current) => ({ ...current, login: true })),
+              disabled: busy !== '',
+              onClick: () => {
+                setOpen((current) => ({ ...current, connection: true }))
+              },
             },
             tr('addAccount'),
           ),
@@ -922,7 +950,7 @@ window.__ModuleLoader__.load({
         creditsCard,
       ]
 
-      const loginBody = [
+      const loginBlock = [
         h('p', { className: 'wb-hint' }, tr('loginHint')),
         h(
           'div',
@@ -993,6 +1021,46 @@ window.__ModuleLoader__.load({
         ),
       ]
 
+      const connectionBody = [
+        status === null
+          ? h('p', { className: 'wb-empty' }, busy === 'status' ? tr('loading') : tr('noStatus'))
+          : h(
+              'div',
+              { className: 'wb-kv' },
+              ...statusPairs.map(([key, value, mono]) =>
+                h(
+                  'div',
+                  { key: 'r:' + key, className: 'wb-kv-row' },
+                  h('span', { className: 'wb-kv-key' }, key),
+                  h('span', { className: mono === true ? 'wb-kv-value wb-mono' : 'wb-kv-value' }, value),
+                ),
+              ),
+            ),
+        h(
+          'div',
+          { className: 'wb-card-actions' },
+          h(
+            'button',
+            {
+              type: 'button',
+              className: 'wb-btn',
+              disabled: busy !== '' || !signedIn,
+              onClick: () => {
+                void onTest()
+              },
+            },
+            busy === 'test' ? tr('testing') : tr('test'),
+          ),
+        ),
+        h('p', { className: 'wb-hint' }, tr('storageNote')),
+        h(
+          'div',
+          { className: 'wb-sub' },
+          h('span', { className: 'wb-sub-title' }, tr('secLogin')),
+        ),
+        ...loginBlock,
+      ]
+
       const modelsBody = [
         h('p', { className: 'wb-hint' }, tr('modelsHint')),
         catalog !== null && catalog.models.length === 0
@@ -1020,45 +1088,6 @@ window.__ModuleLoader__.load({
             ),
       ]
 
-      const statusPairs = [
-        [tr('state'), status === null ? '' : status.signedIn ? tr('signedIn') : tr('notSignedIn'), false],
-        [tr('source'), status === null ? '' : status.saved === true ? tr('sourceSaved') : tr('sourceNone'), false],
-        [tr('account'), status === null || status.uid === '' ? null : status.uid, true],
-        [tr('expiry'), expiry, false],
-        [tr('gateway'), status === null ? '' : status.baseURL, true],
-        [tr('models'), status === null ? '' : String(status.modelCount ?? 0), false],
-      ].filter((pair) => pair[1] !== null)
-
-      const statusBody = [
-        status === null
-          ? h('p', { className: 'wb-empty' }, busy === 'status' ? tr('loading') : tr('noStatus'))
-          : h(
-              'div',
-              { className: 'wb-grid' },
-              ...statusPairs.flatMap(([key, value, mono]) => [
-                h('span', { key: 'k:' + key, className: 'wb-key' }, key),
-                h('span', { key: 'v:' + key, className: mono === true ? 'wb-value wb-mono' : 'wb-value' }, value),
-              ]),
-            ),
-        h('p', { className: 'wb-hint' }, tr('storageNote')),
-        h(
-          'div',
-          { className: 'wb-card-actions', style: { marginTop: '8px' } },
-          h(
-            'button',
-            {
-              type: 'button',
-              className: 'wb-btn',
-              disabled: busy !== '' || !signedIn,
-              onClick: () => {
-                void onTest()
-              },
-            },
-            busy === 'test' ? tr('testing') : tr('test'),
-          ),
-        ),
-      ]
-
       return h(
         'section',
         { className: 'wb-page', 'aria-label': tr('title') },
@@ -1074,31 +1103,7 @@ window.__ModuleLoader__.load({
               h(
                 'div',
                 { className: 'wb-heading-main' },
-                h(
-                  'svg',
-                  { className: 'wb-mark', viewBox: '0 0 32 32', role: 'img', 'aria-hidden': 'true' },
-                  h(
-                    'defs',
-                    null,
-                    h(
-                      'linearGradient',
-                      { id: 'wb-page-gradient', x1: '0', y1: '0', x2: '1', y2: '1' },
-                      h('stop', { offset: '0', stopColor: '#3b82f6' }),
-                      h('stop', { offset: '0.55', stopColor: '#6366f1' }),
-                      h('stop', { offset: '1', stopColor: '#8b5cf6' }),
-                    ),
-                  ),
-                  h('rect', { width: '32', height: '32', rx: '9', fill: 'url(#wb-page-gradient)' }),
-                  h('path', {
-                    d: 'M8 11l3.4 10 3.1-7 3.1 7L21 11',
-                    fill: 'none',
-                    stroke: '#fff',
-                    strokeWidth: '2.2',
-                    strokeLinecap: 'round',
-                    strokeLinejoin: 'round',
-                  }),
-                  h('circle', { cx: '23.5', cy: '9.5', r: '2.2', fill: '#fff', opacity: '0.9' }),
-                ),
+                h('span', { className: 'wb-mark' }, WorkBuddyMark({ size: 24 })),
                 h(
                   'div',
                   { className: 'wb-heading-text' },
@@ -1139,85 +1144,95 @@ window.__ModuleLoader__.load({
                   message.text,
                 )
               : null,
-            Card({
-              title: tr('secAccounts'),
-              subtitle: accounts !== null ? String(accounts.accounts.length) : undefined,
-              open: open.accounts,
-              onToggle: () => toggle('accounts'),
-              children: accountsBody,
-            }),
-            Card({
-              title: tr('secLogin'),
-              open: open.login,
-              onToggle: () => toggle('login'),
-              children: loginBody,
-            }),
-            Card({
-              title: tr('secModels'),
-              subtitle:
-                catalog !== null ? (catalog.source === 'remote' ? tr('modelsRemote') : tr('modelsFallback')) : undefined,
-              open: open.models,
-              onToggle: () => toggle('models'),
-              actions: [
-                h(
-                  'button',
-                  {
-                    type: 'button',
-                    className: 'wb-btn wb-btn-ghost',
-                    disabled: catalogBusy,
-                    onClick: () => {
-                      void loadCatalog('refreshModels')
+            h(
+              'div',
+              { className: 'wb-cards' },
+              Card({
+                title: tr('secAccounts'),
+                subtitle:
+                  accounts !== null
+                    ? String(accounts.accounts.length) + ' ' + tr('accountsUnit')
+                    : undefined,
+                open: open.accounts,
+                onToggle: () => toggle('accounts'),
+                children: accountsBody,
+              }),
+              Card({
+                title: tr('secConnection'),
+                subtitle: status === null ? undefined : status.signedIn ? tr('signedIn') : tr('notSignedIn'),
+                open: open.connection,
+                onToggle: () => toggle('connection'),
+                children: connectionBody,
+              }),
+              Card({
+                title: tr('secModels'),
+                subtitle:
+                  catalog !== null
+                    ? String(catalog.models.length) +
+                      ' · ' +
+                      (catalog.source === 'remote' ? tr('modelsRemote') : tr('modelsFallback'))
+                    : undefined,
+                wide: true,
+                open: open.models,
+                onToggle: () => toggle('models'),
+                actions: [
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'wb-btn wb-btn-ghost wb-btn-sm',
+                      disabled: catalogBusy,
+                      onClick: () => {
+                        void loadCatalog('refreshModels')
+                      },
                     },
-                  },
-                  catalogBusy ? tr('loading') : tr('modelsRefresh'),
-                ),
-              ],
-              children: modelsBody,
-            }),
-            Card({
-              title: tr('secStatus'),
-              open: open.status,
-              onToggle: () => toggle('status'),
-              children: statusBody,
-            }),
+                    catalogBusy ? tr('loading') : tr('modelsRefresh'),
+                  ),
+                ],
+                children: modelsBody,
+              }),
+            ),
           ),
         ),
       )
     }
 
     /**
-     * Sidebar rail glyph: the gradient W mark, sized by the rail.
+     * The WorkBuddy mark: a monochrome W drawn with currentColor, so it follows
+     * the theme in both the rail and the page header.
+     *
+     * @param {{size?: number}} props - Pixel size.
+     * @returns {any} Element.
+     */
+    function WorkBuddyMark({ size }) {
+      const px = typeof size === 'number' && size > 0 ? size : 18
+      return h(
+        'svg',
+        {
+          width: px,
+          height: px,
+          viewBox: '0 0 24 24',
+          fill: 'none',
+          stroke: 'currentColor',
+          strokeWidth: '1.9',
+          strokeLinecap: 'round',
+          strokeLinejoin: 'round',
+          role: 'img',
+          'aria-hidden': 'true',
+        },
+        h('path', { d: 'M3.4 7.5 7 16.6l2.6-6.1 2.6 6.1 3.6-9.1' }),
+        h('circle', { cx: '18.6', cy: '7', r: '1.5', fill: 'currentColor', stroke: 'none' }),
+      )
+    }
+
+    /**
+     * Sidebar rail glyph.
      *
      * @param {{size?: number}} props - Rail props.
      * @returns {any} Element.
      */
     function WorkBuddyGlyph({ size }) {
-      const px = typeof size === 'number' && size > 0 ? size : 18
-      return h(
-        'svg',
-        { width: px, height: px, viewBox: '0 0 32 32', role: 'img', 'aria-hidden': 'true' },
-        h(
-          'defs',
-          null,
-          h(
-            'linearGradient',
-            { id: 'wb-rail-gradient', x1: '0', y1: '0', x2: '1', y2: '1' },
-            h('stop', { offset: '0', stopColor: '#3b82f6' }),
-            h('stop', { offset: '0.55', stopColor: '#6366f1' }),
-            h('stop', { offset: '1', stopColor: '#8b5cf6' }),
-          ),
-        ),
-        h('rect', { width: '32', height: '32', rx: '9', fill: 'url(#wb-rail-gradient)' }),
-        h('path', {
-          d: 'M8 11l3.4 10 3.1-7 3.1 7L21 11',
-          fill: 'none',
-          stroke: '#fff',
-          strokeWidth: '3',
-          strokeLinecap: 'round',
-          strokeLinejoin: 'round',
-        }),
-        h('circle', { cx: '23.5', cy: '9.5', r: '2.4', fill: '#fff', opacity: '0.9' }),
-      )
+      return WorkBuddyMark({ size })
     }
 
     /**

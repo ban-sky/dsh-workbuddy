@@ -17,7 +17,7 @@ The shim adds the WorkBuddy bearer token and account headers (`x-user-id`, `x-en
 
 The model roster is read from WorkBuddy's own app-channel catalog after sign-in (54 chat models on the CN gateway, 23 on the global gateway), with a built-in 20-model snapshot as fallback. The settings tab lists each model's reasoning levels, credit multiplier, and active or upcoming promotion window; **刷新目录** re-reads the catalog without restarting DSH.
 
-The panel is a **standalone sidebar page**: click the WorkBuddy icon in the left rail (directly above 「More」) to open it. Four collapsible groups: accounts (with credits), browser sign-in, models and billing, and runtime status. It uses the app's own page rhythm (20px title, 16px rounded cards, 14px body) and reads every color, border, and focus ring from DSH theme tokens, so light and dark themes both match.
+The panel is a **standalone sidebar page**: click the WorkBuddy icon in the left rail (directly above 「More」) to open it. It is a card grid in the order **accounts → connection → models**: the accounts card lists accounts with their credits, the connection card holds status, the connection test, and browser sign-in, and the models card spans the full row with the catalog, reasoning levels, multipliers, and offers. Wide viewports show two cards per row (the models card takes its own row); narrow viewports fall back to one. The rail glyph and page mark are monochrome line art that follows the theme.
 
 ## Requirements
 
@@ -29,7 +29,7 @@ The panel is a **standalone sidebar page**: click the WorkBuddy icon in the left
 From a release asset (recommended):
 
 ```sh
-dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.5.0.tgz
+dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.6.0.tgz
 ```
 
 From source:
@@ -55,14 +55,14 @@ Signing in again adds a **new account** instead of overwriting the existing one.
 ## Multiple accounts
 
 - Up to 8 accounts, each with its own token, refresh token, and account headers.
-- **切换** makes an account active; model requests and credit lookups only ever use the active account.
-- **重命名** changes only the label, **移除** asks for a second click, and removing the active account promotes the next one.
+- **Switch** makes an account active; model requests and credit lookups only ever use the active account.
+- **Rename** changes only the label, **Remove** asks for a second click, and removing the active account promotes the next one.
 - Every account gets its own device identity and request pacing channel, so accounts never block or impersonate each other.
-- All accounts live in `$DSH_HOME/.workbuddy-credentials.json` (mode `0600`, atomic write); the device salt sits next to it in `.device`. **退出登录** removes only the active account.
+- All accounts live in `$DSH_HOME/.workbuddy-credentials.json` (mode `0600`, atomic write); the device salt sits next to it in `.device`. **Sign out** removes only the active account.
 
 ## Credits
 
-The accounts group shows the active account's credit balance: the total, a remaining/total progress bar per package, cycle end dates, and the nearest expiry. It is read from WorkBuddy's billing endpoint, on this machine only; enterprise accounts use the enterprise quota table and personal accounts use the package table. A failed read shows an error instead of reporting zero.
+The accounts card shows the active account's credit balance: the total, a remaining/total progress bar per package, cycle end dates, and the nearest expiry. It is read from WorkBuddy's billing endpoint, on this machine only; enterprise accounts use the enterprise quota table and personal accounts use the package table. A failed read shows an error instead of reporting zero.
 
 ## Configuration
 
