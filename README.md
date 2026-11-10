@@ -41,7 +41,7 @@ Credits come straight from the `usage.credit` field WorkBuddy returns with every
 From a release asset (recommended):
 
 ```sh
-dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.9.0.tgz
+dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.9.1.tgz
 ```
 
 From source:

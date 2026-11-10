@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.9.1 — 2026-11-10
+
+- **Opening the panel feels instant.** The page fades in over 160 ms and the card
+  grid rises with a 20/60/100/140 ms stagger, so the four cards land in order
+  instead of popping in at once. `prefers-reduced-motion` disables all of it.
+- **Skeletons instead of bare text.** Accounts, connection, and models now draw
+  shimmering placeholder rows until their first payload arrives, so opening the
+  panel never flashes "Loading" or an empty table.
+- **Card surfaces react.** Cards lift slightly on hover (border + soft shadow),
+  headers carry a faint tinted band, account rows and usage tiles highlight on
+  hover, table rows highlight, and buttons nudge 0.5px when pressed.
+- **Header polish.** A hairline rule under the page title separates the heading
+  from the grid, and the monogram sits in a slightly larger inset-ringed tile.
+- **One-click refresh now covers everything.** The header refresh button also
+  reloads the usage card; previously it refreshed accounts, catalog, and credits.
+- Tests: 112 total, unchanged (presentation only).
+
 ## 0.9.0 — 2026-11-10
 
 - **New Usage card.** A fourth card under the model table reports the tokens this
