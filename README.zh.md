@@ -17,7 +17,19 @@ DSH Agent 循环
 
 登录后会读取 WorkBuddy 官方应用通道目录（中国站 54 个对话模型，国际站 23 个），失败时回退到内置的 20 个模型快照。设置页会列出每个模型的推理等级、点数倍率和进行中/即将开始的优惠时段；**刷新目录** 可在不重启 DSH 的情况下重新读取。
 
-配置界面是**侧边栏独立面板**：点击左侧图标栏里的 WorkBuddy 图标（位于「更多」上方）即可打开整页面板。面板为卡片网格，顺序是**账号 → 连接 → 模型**。账号卡和连接卡是**固定展开**的常驻卡片，不能收起；只有模型卡可以点标题栏折叠。账号行改为分两段排版：上方是首字头像加账号名（当前账号带「当前」标签），下方一行 11px 灰色元信息，依次是昵称、域名、令牌到期日与 8 位 uid，操作按钮（切换 / 重命名 / 移除）单独一行左对齐，不再挤在右侧把名字压窄。账号卡内仍带积分总额、每包进度条与到期信息，积分区固定在卡片底部。宽屏账号卡与连接卡并排且等高，模型卡横跨整行；窄屏（<860px）自动改为每行一张。颜色只用在有含义的地方：卡片头带淡色图标、账号头像、连接状态圆点、积分条低于 30% 转黄、低于 10% 转红。图标与页面标记为黑白线条，随主题自动反色。
+配置界面是**侧边栏独立面板**：点击左侧图标栏里的 WorkBuddy 图标（位于「更多」上方）即可打开整页面板。面板为卡片网格，顺序是**账号 → 连接 → 模型 → 用量**。账号卡和连接卡是**固定展开**的常驻卡片，不能收起；只有模型卡可以点标题栏折叠。账号行改为分两段排版：上方是首字头像加账号名（当前账号带「当前」标签），下方一行 11px 灰色元信息，依次是昵称、域名、令牌到期日与 8 位 uid，操作按钮（切换 / 重命名 / 移除）单独一行左对齐，不再挤在右侧把名字压窄。账号卡内仍带积分总额、每包进度条与到期信息，积分区固定在卡片底部。宽屏账号卡与连接卡并排且等高，模型卡与用量卡横跨整行；窄屏（<860px）自动改为每行一张。颜色只用在有含义的地方：卡片头带淡色图标、账号头像、连接状态圆点、积分条低于 30% 转黄、低于 10% 转红。图标与页面标记为黑白线条，随主题自动反色。
+
+
+## 用量统计
+
+模型卡下方的**用量统计**卡展示本机经由此插件发出的请求消耗：
+
+- **输入 / 输出 / 缓存命中 / 未缓存** token 数，以及请求数与消耗积分；
+- **每积分 token 数**、**每千 token 积分**与**缓存命中率**；
+- **按模型**拆分的 token 与积分小计；
+- 右上角可**刷新用量**，或**清零统计**（点两次确认，只清除当前账号的统计）。
+
+积分消耗直接取自 WorkBuddy 每次响应返回的 `usage.credit`，缓存命中取自 `prompt_cache_hit_tokens`，因此数字与服务端计费一致。统计按账号隔离，保存在 `$DSH_HOME/.workbuddy-usage.json`（权限 0600），只记录计数，不记录任何对话内容。
 
 ## 环境要求
 
@@ -29,7 +41,7 @@ DSH Agent 循环
 推荐从 Release 安装：
 
 ```sh
-dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.8.0.tgz
+dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.9.0.tgz
 ```
 
 从源码安装：
@@ -98,12 +110,12 @@ WorkBuddy 的配额、限流错误会作为普通模型错误返回 DSH。
 ## 开发
 
 ```sh
-npm test        # 85 项测试：账号存储、设备标识与节流、积分、credentials、OAuth、模型目录、优惠、HTTP 路由、shim、adapter、插件
+npm test        # 112 项测试：账号存储、设备标识与节流、积分、用量账本、credentials、OAuth、模型目录、优惠、HTTP 路由、shim、adapter、插件
 npm run verify  # 语法 + manifest + locale/icon 检查
 npm run build   # dist/*.tgz + sha256
 ```
 
-代码结构：`lib/token-store.js`（多账号 0600 文件）、`lib/accounts.js`（设备标识与按账号节流）、`lib/credits.js`（积分接口）、`lib/credentials.js`（当前账号的 token 与刷新）、`lib/oauth.js`（网页登录）、`lib/catalog-source.js`（在线目录与优惠）、`lib/promotions.js`（时段与徽章）、`lib/http.js`（设置页路由）、`lib/shim.js`（本地代理）、`lib/adapter.js`（DSH provider）、`client.js`（可折叠的设置分区）。
+代码结构：`lib/token-store.js`（多账号 0600 文件）、`lib/accounts.js`（设备标识与按账号节流）、`lib/credits.js`（积分接口）、`lib/usage.js`（按账号累计 token 与积分）、`lib/credentials.js`（当前账号的 token 与刷新）、`lib/oauth.js`（网页登录）、`lib/catalog-source.js`（在线目录与优惠）、`lib/promotions.js`（时段与徽章）、`lib/http.js`（设置页路由）、`lib/shim.js`（本地代理）、`lib/adapter.js`（DSH provider）、`client.js`（侧边栏面板、模型表与用量卡）。
 
 GitHub Actions 在 Node 22/24 上跑测试，并在打 tag 时发布 Release。
 

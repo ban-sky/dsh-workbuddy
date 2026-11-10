@@ -11,6 +11,7 @@ import test from 'node:test'
 import { CredentialError } from '../lib/credentials.js'
 import { createWorkBuddyHandler, probeGateway } from '../lib/http.js'
 import { TokenStore } from '../lib/token-store.js'
+import { UsageLedger } from '../lib/usage.js'
 
 /**
  * Fake credential surface used by the handler.
@@ -103,6 +104,7 @@ function harness(options = {}) {
   const store = new TokenStore({ path: join(directory, '.workbuddy-credentials.json') })
   const credentials = fakeCredentials({ ...options, store })
   const oauth = fakeOAuth()
+  const usage = options.usage ?? new UsageLedger({ path: '' })
   const catalogState = {
     source: 'fallback',
     fetchedAt: 1_700_000_000_000,
@@ -129,9 +131,10 @@ function harness(options = {}) {
     oauth,
     catalog: () => catalogState,
     refreshCatalog: async () => catalogState,
+    usage,
     fetchImpl: options.fetchImpl ?? globalThis.fetch,
   })
-  return { handle, store, credentials, oauth }
+  return { handle, store, credentials, oauth, usage }
 }
 
 /**
@@ -392,4 +395,59 @@ test('credits reports an upstream failure instead of a zero balance', async () =
   assert.equal(status, 502)
   assert.equal(body.error.code, 'CREDITS_FAILED')
   assert.match(body.error.message, /boom/)
+})
+
+test('usage returns recorded counters and the credit-to-token conversion', async () => {
+  const { handle, usage } = harness()
+  usage.record({
+    accountId: 'u-1',
+    model: 'glm-5.3',
+    usage: {
+      prompt_tokens: 1000,
+      completion_tokens: 500,
+      total_tokens: 1500,
+      prompt_cache_hit_tokens: 750,
+      prompt_cache_miss_tokens: 250,
+      credit: 0.5,
+    },
+  })
+  const { status, body, text } = await post(handle, { action: 'usage' })
+  assert.equal(status, 200)
+  assert.equal(body.ok, true)
+  assert.equal(body.value.totals.requests, 1)
+  assert.equal(body.value.totals.promptTokens, 1000)
+  assert.equal(body.value.totals.completionTokens, 500)
+  assert.equal(body.value.totals.cachedTokens, 750)
+  assert.equal(body.value.totals.uncachedTokens, 250)
+  assert.equal(body.value.totals.credits, 0.5)
+  assert.equal(body.value.totals.cacheHitRate, 0.75)
+  assert.equal(body.value.totals.tokensPerCredit, 3000)
+  assert.equal(body.value.accounts.length, 1)
+  assert.equal(body.value.accounts[0].models.length, 1)
+  assert.equal(body.value.accounts[0].models[0].id, 'glm-5.3')
+  assert.equal(text.includes('secret-token'), false)
+})
+
+test('usage is empty rather than failing before the first completion', async () => {
+  const { handle } = harness()
+  const { status, body } = await post(handle, { action: 'usage' })
+  assert.equal(status, 200)
+  assert.equal(body.ok, true)
+  assert.equal(body.value.totals.requests, 0)
+  assert.deepEqual(body.value.accounts, [])
+})
+
+test('resetUsage clears the active account and leaves the others alone', async () => {
+  const { handle, usage } = harness()
+  const block = { prompt_tokens: 10, completion_tokens: 2, total_tokens: 12, credit: 0.01 }
+  usage.record({ accountId: 'u-1', model: 'a', usage: block })
+  usage.record({ accountId: 'u-2', model: 'a', usage: block })
+  const { status, body } = await post(handle, { action: 'resetUsage', id: 'u-1' })
+  assert.equal(status, 200)
+  assert.equal(body.ok, true)
+  assert.equal(body.value.accounts.length, 0)
+  assert.equal(body.value.totals.requests, 0)
+  // The other account still has its counters.
+  const other = await post(handle, { action: 'usage', id: 'u-2' })
+  assert.equal(other.body.value.totals.requests, 1)
 })

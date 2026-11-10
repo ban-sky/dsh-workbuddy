@@ -26,6 +26,7 @@ import { createWorkBuddyHandler, ROUTE_PATH } from './lib/http.js'
 import { WorkBuddyOAuth } from './lib/oauth.js'
 import { defaultTokenStorePath, TokenStore } from './lib/token-store.js'
 import { loadDeviceSalt, RequestPacer } from './lib/accounts.js'
+import { defaultUsagePath, UsageLedger } from './lib/usage.js'
 
 /** Cordis services this plugin needs before it activates. */
 export const inject = ['llm']
@@ -82,6 +83,13 @@ export async function apply(ctx, config) {
   // Requests are paced per account, so parallel work on one account cannot
   // look like a burst while another account stays untouched.
   const pacer = new RequestPacer()
+  // Token and credit counters. The gateway reports the real numbers on the
+  // final chunk of each completion, so the shim taps its own stream; this
+  // ledger is what the statistics card reads.
+  const usage = new UsageLedger({
+    path: defaultUsagePath(),
+    onWarning: (message) => ctx.logger.warn(`workbuddy: ${message}`),
+  })
 
   const oauth = new WorkBuddyOAuth({ fetchImpl: globalThis.fetch })
 
@@ -117,6 +125,7 @@ export async function apply(ctx, config) {
   const shim = await startShim({
     credentials,
     pacer,
+    usage,
     models: () => catalogState.models,
     providerId: PROVIDER_ID,
     port: cfg.port,
@@ -193,6 +202,7 @@ export async function apply(ctx, config) {
             oauth,
             catalog: () => catalogState,
             refreshCatalog,
+            usage,
             onWarning: (message) => ctx.logger.warn(`workbuddy: ${message}`),
           }),
         }),

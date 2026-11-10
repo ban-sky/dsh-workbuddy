@@ -47,6 +47,7 @@ const sources = [
   'lib/shim.js',
   'lib/adapter.js',
   'lib/token-store.js',
+  'lib/usage.js',
 ]
 for (const file of sources) {
   execFileSync(process.execPath, ['--check', join(root, file)], { stdio: 'inherit' })

@@ -17,7 +17,19 @@ The shim adds the WorkBuddy bearer token and account headers (`x-user-id`, `x-en
 
 The model roster is read from WorkBuddy's own app-channel catalog after sign-in (54 chat models on the CN gateway, 23 on the global gateway), with a built-in 20-model snapshot as fallback. The settings tab lists each model's reasoning levels, credit multiplier, and active or upcoming promotion window; **刷新目录** re-reads the catalog without restarting DSH.
 
-The panel is a **standalone sidebar page**: click the WorkBuddy icon in the left rail (directly above 「More」) to open it. It is a card grid in the order **accounts → connection → models**. The accounts and connection cards are **fixed open** and cannot be collapsed; only the models card toggles from its header. Account rows are now two-tier: an initial avatar and the account name (with a "Current" chip) on top, then one 11px muted line holding nickname, domain, token expiry, and the first 8 characters of the uid, with the switch / rename / remove buttons on their own left-aligned row instead of squeezing the name from the right. The accounts card keeps the credit total, per-package bars, and expiry, pinned to the card bottom. Wide viewports put the accounts and connection cards side by side at equal height with the models card spanning the full row; below 860px everything stacks. Colour is meaningful: tinted card-header glyphs, account avatars, a status dot on the connection state, and credit bars that turn amber below 30% and red below 10%. The rail glyph and page mark are monochrome line art that follows the theme.
+The panel is a **standalone sidebar page**: click the WorkBuddy icon in the left rail (directly above 「More」) to open it. It is a card grid in the order **accounts → connection → models → usage**. The accounts and connection cards are **fixed open** and cannot be collapsed; only the models card toggles from its header. Account rows are now two-tier: an initial avatar and the account name (with a "Current" chip) on top, then one 11px muted line holding nickname, domain, token expiry, and the first 8 characters of the uid, with the switch / rename / remove buttons on their own left-aligned row instead of squeezing the name from the right. The accounts card keeps the credit total, per-package bars, and expiry, pinned to the card bottom. Wide viewports put the accounts and connection cards side by side at equal height with the models and usage cards spanning the full row; below 860px everything stacks. Colour is meaningful: tinted card-header glyphs, account avatars, a status dot on the connection state, and credit bars that turn amber below 30% and red below 10%. The rail glyph and page mark are monochrome line art that follows the theme.
+
+
+## Usage statistics
+
+The **Usage** card under the model table shows what this machine has spent through the plugin:
+
+- input / output / cache-hit / uncached token counts, plus request count and credits spent;
+- tokens per credit, credits per 1K tokens, and the cache hit rate;
+- a per-model breakdown of tokens and credits;
+- **Refresh usage** and **Reset** in the card header (reset needs a second click and clears the current account only).
+
+Credits come straight from the `usage.credit` field WorkBuddy returns with every response, and cache hits from `prompt_cache_hit_tokens`, so the numbers match server-side billing. Statistics are isolated per account and stored in `$DSH_HOME/.workbuddy-usage.json` (mode 0600) as counters only — no conversation content is ever written.
 
 ## Requirements
 
@@ -29,7 +41,7 @@ The panel is a **standalone sidebar page**: click the WorkBuddy icon in the left
 From a release asset (recommended):
 
 ```sh
-dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.8.0.tgz
+dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.9.0.tgz
 ```
 
 From source:
@@ -98,12 +110,12 @@ Quota and rate-limit errors from WorkBuddy are returned to DSH as normal model e
 ## Development
 
 ```sh
-npm test        # 85 tests: account store, device identity and pacing, credits, credentials, OAuth, catalog, promotions, HTTP route, shim, adapter, plugin
+npm test        # 112 tests: account store, device identity and pacing, credits, usage ledger, credentials, OAuth, catalog, promotions, HTTP route, shim, adapter, plugin
 npm run verify  # syntax + manifest + locale/icon checks
 npm run build   # dist/*.tgz + sha256
 ```
 
-Layout: `lib/credentials.js` (saved token + refresh), `lib/oauth.js` (browser login), `lib/catalog-source.js` (live catalog + promotions), `lib/promotions.js` (windows and badges), `lib/token-store.js` (0600 file), `lib/http.js` (settings route), `lib/shim.js` (loopback proxy), `lib/adapter.js` (DSH provider), `client.js` (settings tab with the model table).
+Layout: `lib/credentials.js` (saved token + refresh), `lib/oauth.js` (browser login), `lib/catalog-source.js` (live catalog + promotions), `lib/promotions.js` (windows and badges), `lib/token-store.js` (0600 file), `lib/usage.js` (per-account token and credit counters), `lib/http.js` (settings route), `lib/shim.js` (loopback proxy), `lib/adapter.js` (DSH provider), `client.js` (the sidebar panel with the model table and usage card).
 
 GitHub Actions runs tests on Node 22/24 and publishes tagged releases.
 

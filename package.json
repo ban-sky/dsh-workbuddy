@@ -1,7 +1,7 @@
 {
   "name": "@ban-sky/dsh-workbuddy",
-  "version": "0.8.0",
-  "description": "WorkBuddy / CodeBuddy models in DeepSeek Harness: a native sidebar panel, one-time browser sign-in, live model catalog, credit balance, and multi-account isolation with per-account pacing.",
+  "version": "0.9.0",
+  "description": "WorkBuddy / CodeBuddy models in DeepSeek Harness: browser sign-in, live model catalog, credit balance, multi-account isolation, and per-account token usage statistics.",
   "type": "module",
   "engines": {
     "node": ">=22"
@@ -42,7 +42,7 @@
     "test": "node --test test/*.test.js",
     "test:watch": "node --test --watch test/*.test.js",
     "build": "node scripts/build.mjs",
-    "verify": "node --check index.js && node --check client.js && node --check lib/accounts.js && node --check lib/catalog.js && node --check lib/catalog-source.js && node --check lib/credentials.js && node --check lib/credits.js && node --check lib/http.js && node --check lib/jwt.js && node --check lib/oauth.js && node --check lib/promotions.js && node --check lib/shim.js && node --check lib/adapter.js && node --check lib/token-store.js"
+    "verify": "node --check index.js && node --check client.js && node --check lib/accounts.js && node --check lib/catalog.js && node --check lib/catalog-source.js && node --check lib/credentials.js && node --check lib/credits.js && node --check lib/http.js && node --check lib/jwt.js && node --check lib/oauth.js && node --check lib/promotions.js && node --check lib/shim.js && node --check lib/adapter.js && node --check lib/token-store.js && node --check lib/usage.js"
   },
   "dsh": {
     "bundle": {

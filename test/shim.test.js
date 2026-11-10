@@ -96,6 +96,83 @@ test('streams a chat completion and forwards the WorkBuddy account headers', asy
   }
 })
 
+test('records the usage block of a streamed completion into the ledger', async () => {
+  const upstream = await startFakeWorkBuddy({ reply: 'ok' })
+  const calls = []
+  const shim = await startShim({
+    credentials: savedCredentials(upstream.url),
+    models: () => [],
+    usage: { record: (input) => calls.push(input) },
+  })
+  try {
+    const response = await postChat(shim.url, shim.token, {
+      model: 'glm-5.2',
+      stream: true,
+      messages: [{ role: 'user', content: 'hi' }],
+    })
+    assert.equal(response.status, 200)
+    await response.text()
+    assert.equal(calls.length, 1)
+    assert.equal(calls[0].model, 'glm-5.2')
+    assert.equal(calls[0].accountId, 'default')
+    assert.equal(calls[0].usage.prompt_tokens, 7)
+    assert.equal(calls[0].usage.completion_tokens, 4)
+    assert.equal(calls[0].usage.total_tokens, 11)
+  } finally {
+    await shim.close()
+    await upstream.close()
+  }
+})
+
+test('records the usage block of a non-streaming completion', async () => {
+  const upstream = await startFakeWorkBuddy({ reply: 'ok' })
+  const calls = []
+  const shim = await startShim({
+    credentials: savedCredentials(upstream.url),
+    models: () => [],
+    usage: { record: (input) => calls.push(input) },
+  })
+  try {
+    const response = await postChat(shim.url, shim.token, {
+      model: 'glm-5.2',
+      messages: [{ role: 'user', content: 'hi' }],
+    })
+    assert.equal(response.status, 200)
+    await response.text()
+    assert.equal(calls.length, 1)
+    assert.equal(calls[0].usage.total_tokens, 11)
+  } finally {
+    await shim.close()
+    await upstream.close()
+  }
+})
+
+test('a failing ledger never breaks the stream', async () => {
+  const upstream = await startFakeWorkBuddy({ reply: 'still fine' })
+  const shim = await startShim({
+    credentials: savedCredentials(upstream.url),
+    models: () => [],
+    usage: {
+      record: () => {
+        throw new Error('disk full')
+      },
+    },
+  })
+  try {
+    const response = await postChat(shim.url, shim.token, {
+      model: 'glm-5.2',
+      stream: true,
+      messages: [{ role: 'user', content: 'hi' }],
+    })
+    assert.equal(response.status, 200)
+    const text = await response.text()
+    assert.match(text, /\[DONE\]/)
+  } finally {
+    await shim.close()
+    await upstream.close()
+  }
+})
+
 test('maps a WorkBuddy quota error to an OpenAI-shaped error body', async () => {
   const upstream = await startFakeWorkBuddy({
     chatOverride: () => ({

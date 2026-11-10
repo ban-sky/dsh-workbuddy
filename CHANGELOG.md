@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.9.0 — 2026-11-10
+
+- **New Usage card.** A fourth card under the model table reports the tokens this
+  machine has spent through the plugin: input, output, cache-hit, and uncached
+  token counts, the request count, and credits spent, then tokens per credit,
+  credits per 1K tokens, and the cache hit rate, plus a per-model breakdown.
+  The card is fixed open and full width; its header carries **Refresh usage** and
+  a two-click **Reset**.
+- **Real billing numbers, not estimates.** The loopback shim now taps its own SSE
+  stream (and the JSON body for non-streaming calls) and records the `usage` block
+  WorkBuddy returns: `prompt_tokens`, `completion_tokens`, `prompt_cache_hit_tokens`,
+  `prompt_cache_miss_tokens`, and `usage.credit`. Because credits come from the
+  gateway itself, the totals match server-side billing; a 1-token ping reports 0.
+- **New `lib/usage.js`.** A per-account, per-model ledger with counters only —
+  no prompts, responses, or identifiers beyond the account id — persisted debounced
+  to `$DSH_HOME/.workbuddy-usage.json` (mode 0600, atomic rename, 1 MB cap, 16
+  accounts, 64 models). `summarizeCounters` derives the ratio fields and rounds
+  credits to six decimals so repeated addition cannot drift.
+- **New Host actions** `usage` and `resetUsage`, exposed through `usagePayload`.
+  The client stays quiet when a pre-0.9.0 Host answers `UNKNOWN_ACTION`.
+- Tests: 112 total (21 new for the ledger and SSE tap, 3 for the shim recording
+  path, 3 for the new actions).
+
 ## 0.8.0 — 2026-11-10
 
 - **The accounts and connection cards are fixed open.** `Card` gained a `fixed`

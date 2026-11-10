@@ -42,6 +42,24 @@ window.__ModuleLoader__.load({
       creditsPackage: '积分套餐',
       creditsSourcePersonal: '积分来自 WorkBuddy 个人计费接口。',
       creditsSourceEnterprise: '积分来自 WorkBuddy 企业计费接口。',
+      secUsage: '用量统计',
+      usageInput: '输入',
+      usageOutput: '输出',
+      usageCached: '缓存命中',
+      usageUncached: '未缓存',
+      usageRequests: '请求数',
+      usageCreditsSpent: '消耗积分',
+      usageTokensPerCredit: '每积分 token',
+      usageCreditsPerKToken: '每千 token 积分',
+      usageCacheHitRate: '缓存命中率',
+      usageRefresh: '刷新用量',
+      usageReset: '清零统计',
+      usageConfirmReset: '再次点击清零',
+      usageEmpty: '还没有用量记录。发起一次对话后，这里会显示输入、输出与缓存命中情况。',
+      usageHint: '积分消耗取自 WorkBuddy 每次响应返回的计费用量，仅统计本机经由此插件发出的请求。',
+      usageByModel: '按模型',
+      usageCreditsShort: '积分',
+      usageUpdated: '统计时间',
       loginHint: '生成登录链接后，在浏览器完成登录，令牌会自动保存。',
       loginRegion: '登录站点',
       loginRegionCn: '中国站（codebuddy.cn）',
@@ -122,6 +140,24 @@ window.__ModuleLoader__.load({
       creditsPackage: 'Credit package',
       creditsSourcePersonal: 'Credits come from the WorkBuddy personal billing API.',
       creditsSourceEnterprise: 'Credits come from the WorkBuddy enterprise billing API.',
+      secUsage: 'Usage',
+      usageInput: 'Input',
+      usageOutput: 'Output',
+      usageCached: 'Cache hit',
+      usageUncached: 'Uncached',
+      usageRequests: 'Requests',
+      usageCreditsSpent: 'Credits spent',
+      usageTokensPerCredit: 'Tokens per credit',
+      usageCreditsPerKToken: 'Credits per 1K tokens',
+      usageCacheHitRate: 'Cache hit rate',
+      usageRefresh: 'Refresh usage',
+      usageReset: 'Reset',
+      usageConfirmReset: 'Click again to reset',
+      usageEmpty: 'No usage recorded yet. Start a conversation and the input, output, and cache figures appear here.',
+      usageHint: 'Credits come from the billing usage WorkBuddy returns with every response; only requests sent through this plugin on this machine are counted.',
+      usageByModel: 'By model',
+      usageCreditsShort: 'credits',
+      usageUpdated: 'Measured',
       loginHint: 'Generate a login link, finish signing in, and the token is saved automatically.',
       loginRegion: 'Login site',
       loginRegionCn: 'China (codebuddy.cn)',
@@ -246,6 +282,41 @@ window.__ModuleLoader__.load({
       return text === '' ? '?' : Array.from(text)[0].toUpperCase()
     }
 
+    /**
+     * Group a token or request count with thin separators.
+     *
+     * @param {unknown} value - Number from the Host.
+     * @returns {string} Display text, `—` when unknown.
+     */
+    function formatCount(value) {
+      if (typeof value !== 'number' || Number.isFinite(value) !== true) return '—'
+      return Math.round(value).toLocaleString()
+    }
+
+    /**
+     * Show a credit amount without trailing zeros.
+     *
+     * @param {unknown} value - Credits, possibly fractional.
+     * @returns {string} Display text, `—` when unknown.
+     */
+    function formatCredits(value) {
+      if (typeof value !== 'number' || Number.isFinite(value) !== true) return '—'
+      if (value === 0) return '0'
+      if (value < 0.01) return value.toFixed(4).replace(/0+$/, '').replace(/\.$/, '')
+      return (Math.round(value * 100) / 100).toFixed(2).replace(/\.00$/, '').replace(/(\.\d)0$/, '$1')
+    }
+
+    /**
+     * Turn a 0..1 ratio into a percentage.
+     *
+     * @param {unknown} value - Ratio.
+     * @returns {string} Display text.
+     */
+    function formatPercent(value) {
+      if (typeof value !== 'number' || Number.isFinite(value) !== true) return '—'
+      return (Math.round(value * 1000) / 10).toFixed(1).replace(/\.0$/, '') + '%'
+    }
+
     const CSS = `
 .wb-page{width:100%;min-width:0;height:100%;min-height:0;display:flex;overflow:hidden;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
 .wb-scroll{flex:1;min-width:0;min-height:0;overflow:auto;scrollbar-gutter:stable;--dsh-scrollbar-width:9px;--dsh-scrollbar-thumb-border:2px}
@@ -280,6 +351,7 @@ window.__ModuleLoader__.load({
 .wb-card-icon-accounts{background:color-mix(in srgb, var(--dsw-alias-state-business-primary,#4b6bff) 10%, transparent);color:var(--dsw-alias-state-business-primary,#4b6bff)}
 .wb-card-icon-connection{background:color-mix(in srgb, var(--dsw-alias-state-success-primary,#2ea043) 12%, transparent);color:var(--dsw-alias-state-success-primary,#17663a)}
 .wb-card-icon-models{background:color-mix(in srgb, var(--dsw-alias-state-warn-primary,#bf7800) 14%, transparent);color:var(--dsw-alias-label-warning,#8a5a00)}
+.wb-card-icon-usage{background:color-mix(in srgb, var(--dsw-alias-state-business-primary,#4b6bff) 12%, transparent);color:color-mix(in srgb, var(--dsw-alias-state-business-primary,#4b6bff) 78%, var(--dsw-alias-label-primary,#111))}
 .wb-avatar{width:30px;height:30px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:9px;color:#fff;font-size:12px;font-weight:600;line-height:1;letter-spacing:.02em}
 .wb-dot{width:7px;height:7px;flex:none;border-radius:50%;display:inline-block}
 .wb-dot-on{background:var(--dsw-alias-state-success-primary,#2ea043)}
@@ -362,6 +434,15 @@ window.__ModuleLoader__.load({
 .wb-model-id{font-size:10.5px;line-height:16px;color:var(--dsw-alias-label-tertiary)}
 .wb-chips{display:flex;gap:3px;flex-wrap:wrap;align-items:center}
 .wb-chips-sm .wb-chip{height:18px;padding:0 6px;font-size:10.5px;border-radius:5px}
+.wb-usage-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media(max-width:640px){.wb-usage-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.wb-usage-cell{display:flex;flex-direction:column;gap:2px;padding:9px 11px;border:.5px solid var(--dsw-alias-border-l4);border-radius:10px;min-width:0}
+.wb-usage-label{font-size:11px;line-height:16px;color:var(--dsw-alias-label-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wb-usage-value{font-size:15px;font-weight:600;line-height:22px;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.wb-usage-models{display:flex;flex-direction:column;gap:4px}
+.wb-usage-model{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-size:11px;line-height:18px;min-width:0}
+.wb-usage-model-name{color:var(--dsw-alias-label-secondary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wb-usage-model-meta{color:var(--dsw-alias-label-tertiary);font-variant-numeric:tabular-nums;white-space:nowrap;flex:none}
 .wb-promo-cell{display:flex;align-items:center;gap:4px;min-width:96px}
 .wb-promo-text{max-width:170px;font-size:11px;line-height:17px;color:var(--dsw-alias-label-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
@@ -447,6 +528,9 @@ window.__ModuleLoader__.load({
       const [loginRegion, setLoginRegion] = useState('cn')
       const [catalog, setCatalog] = useState(null)
       const [catalogBusy, setCatalogBusy] = useState(false)
+      const [usage, setUsage] = useState(null)
+      const [usageBusy, setUsageBusy] = useState(false)
+      const [usageResetArmed, setUsageResetArmed] = useState(false)
 
       const toggle = (key) => setOpen((current) => ({ ...current, [key]: !current[key] }))
 
@@ -501,6 +585,20 @@ window.__ModuleLoader__.load({
         }
       }, [])
 
+      const loadUsage = useCallback(async (action = 'usage', payload) => {
+        setUsageBusy(true)
+        try {
+          setUsage(await call(action, payload))
+        } catch (error) {
+          // An older Host half has no `usage` action; the card simply stays empty.
+          if (error?.code !== 'UNKNOWN_ACTION') {
+            setMessage({ kind: 'error', text: tr('statusError') + ': ' + error.message })
+          }
+        } finally {
+          setUsageBusy(false)
+        }
+      }, [tr])
+
       useEffect(() => {
         void refresh()
         void loadCatalog()
@@ -511,10 +609,12 @@ window.__ModuleLoader__.load({
       useEffect(() => {
         if (!signedIn) {
           setCredits(null)
+          setUsage(null)
           return
         }
         void loadCredits()
-      }, [signedIn, status?.activeAccountId, loadCredits])
+        void loadUsage()
+      }, [signedIn, status?.activeAccountId, loadCredits, loadUsage])
 
       useEffect(() => {
         if (login === null || login.status !== 'pending') return undefined
@@ -965,6 +1065,78 @@ window.__ModuleLoader__.load({
               : null,
           )
 
+      const usageTotals = usage?.totals ?? null
+      const usageModels = usage?.accounts?.find((entry) => entry.id === status?.activeAccountId)?.models ?? []
+
+      const usageBody = [
+        h('p', { className: 'wb-hint' }, tr('usageHint')),
+        usageTotals === null || usageTotals.requests === 0
+          ? h('p', { className: 'wb-empty' }, tr('usageEmpty'))
+          : h(
+              'div',
+              { className: 'wb-usage-grid' },
+              ...[
+                [tr('usageInput'), formatCount(usageTotals.promptTokens)],
+                [tr('usageOutput'), formatCount(usageTotals.completionTokens)],
+                [tr('usageCached'), formatCount(usageTotals.cachedTokens)],
+                [tr('usageUncached'), formatCount(usageTotals.uncachedTokens)],
+                [tr('usageRequests'), formatCount(usageTotals.requests)],
+                [tr('usageCreditsSpent'), formatCredits(usageTotals.credits)],
+              ].map((pair) =>
+                h(
+                  'div',
+                  { key: pair[0], className: 'wb-usage-cell' },
+                  h('span', { className: 'wb-usage-label' }, pair[0]),
+                  h('span', { className: 'wb-usage-value' }, pair[1]),
+                ),
+              ),
+            ),
+        usageTotals === null || usageTotals.requests === 0
+          ? null
+          : h(
+              'div',
+              { className: 'wb-kv' },
+              ...[
+                [tr('usageCacheHitRate'), formatPercent(usageTotals.cacheHitRate)],
+                [tr('usageTokensPerCredit'), formatCount(usageTotals.tokensPerCredit)],
+                [tr('usageCreditsPerKToken'), formatCredits(usageTotals.creditsPerKToken)],
+              ].map((pair) =>
+                h(
+                  'div',
+                  { key: pair[0], className: 'wb-kv-row' },
+                  h('span', { className: 'wb-kv-key' }, pair[0]),
+                  h('span', { className: 'wb-kv-value wb-mono' }, pair[1]),
+                ),
+              ),
+            ),
+        usageModels.length === 0
+          ? null
+          : h(
+              'div',
+              { className: 'wb-usage-models' },
+              h('span', { className: 'wb-sub-title' }, tr('usageByModel')),
+              ...usageModels.map((model) =>
+                h(
+                  'div',
+                  { key: model.id, className: 'wb-usage-model' },
+                  h('span', { className: 'wb-usage-model-name wb-mono' }, model.id),
+                  h(
+                    'span',
+                    { className: 'wb-usage-model-meta' },
+                    formatCount(model.totalTokens) + ' tok · ' + formatCredits(model.credits) + ' ' + tr('usageCreditsShort'),
+                  ),
+                ),
+              ),
+            ),
+        usage !== null && typeof usage.updatedAt === 'number' && usage.updatedAt > 0
+          ? h(
+              'p',
+              { className: 'wb-hint' },
+              tr('usageUpdated') + ' ' + new Date(usage.updatedAt).toLocaleString(),
+            )
+          : null,
+      ]
+
       const statusPairs = [
         [
           tr('state'),
@@ -1289,6 +1461,50 @@ window.__ModuleLoader__.load({
                 ],
                 children: modelsBody,
               }),
+              Card({
+                title: tr('secUsage'),
+                icon: { tone: 'usage', node: () => CardIcon('usage', 15) },
+                subtitle:
+                  usageTotals !== null && usageTotals.requests > 0
+                    ? formatCount(usageTotals.requests) + ' · ' + formatCredits(usageTotals.credits) + ' ' + tr('usageCreditsShort')
+                    : undefined,
+                wide: true,
+                fixed: true,
+                actions: [
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'wb-btn wb-btn-ghost wb-btn-sm',
+                      disabled: usageBusy,
+                      onClick: () => {
+                        void loadUsage()
+                      },
+                    },
+                    usageBusy ? tr('loading') : tr('usageRefresh'),
+                  ),
+                  usageTotals !== null && usageTotals.requests > 0
+                    ? h(
+                        'button',
+                        {
+                          type: 'button',
+                          className: 'wb-btn wb-btn-ghost wb-btn-sm',
+                          disabled: usageBusy,
+                          onClick: () => {
+                            if (!usageResetArmed) {
+                              setUsageResetArmed(true)
+                              return
+                            }
+                            setUsageResetArmed(false)
+                            void loadUsage('resetUsage')
+                          },
+                        },
+                        usageResetArmed ? tr('usageConfirmReset') : tr('usageReset'),
+                      )
+                    : null,
+                ],
+                children: usageBody,
+              }),
             ),
           ),
         ),
@@ -1307,6 +1523,7 @@ window.__ModuleLoader__.load({
         accounts: ['M4 6.5h16', 'M4 12h16', 'M4 17.5h10'],
         connection: ['M8.5 12h7', 'M6 8.5h-.5a3.5 3.5 0 0 0 0 7H6', 'M18 15.5h.5a3.5 3.5 0 0 0 0-7H18'],
         models: ['M4.5 7.5 12 4l7.5 3.5v9L12 20l-7.5-3.5z', 'M4.5 7.5 12 11l7.5-3.5', 'M12 11v9'],
+        usage: ['M4.5 19.5h15', 'M7 19.5V13', 'M12 19.5V7', 'M17 19.5v-4.5'],
       }
       return h(
         'svg',
