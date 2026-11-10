@@ -23,6 +23,10 @@ were used to build an independent implementation.
   converter for the same gateway: <https://github.com/HanHan666666/codebuddy2openai>
 - `syh0119/workbuddy2api` — community OpenAI-compatible gateway for WorkBuddy:
   <https://github.com/syh0119/workbuddy2api>
+- `dingminhua/dsh-connect-workbuddy` — independently measured the app-channel
+  `/v3/config` user-agent matrix, the promotion/tier feeds, and the browser
+  login endpoints; used as a protocol reference only:
+  <https://github.com/dingminhua/dsh-connect-workbuddy>
 
 ## Runtime dependencies
 
