@@ -1,6 +1,6 @@
 {
   "name": "@ban-sky/dsh-workbuddy",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "WorkBuddy / CodeBuddy models in DeepSeek Harness: a native sidebar panel, one-time browser sign-in, live model catalog, credit balance, and multi-account isolation with per-account pacing.",
   "type": "module",
   "engines": {

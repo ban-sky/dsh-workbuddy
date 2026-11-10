@@ -272,6 +272,8 @@ window.__ModuleLoader__.load({
 .wb-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:50px;padding:11px 16px;border-bottom:.5px solid var(--dsw-alias-border-l4)}
 .wb-card-close .wb-card-head{border-bottom-color:transparent}
 .wb-card-titles{display:flex;align-items:center;gap:9px;min-width:0;padding:2px 4px 2px 0;margin:-2px 0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;border-radius:8px}
+.wb-card-titles-static{cursor:default;padding:2px 0;margin:0}
+.wb-card-titles-static:focus-visible{outline:none}
 .wb-card-titles:focus-visible{outline:2px solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:2px}
 .wb-card-title{font-size:14px;font-weight:600;line-height:22px;white-space:nowrap}
 .wb-card-icon{width:26px;height:26px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;background:var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.05));color:var(--dsw-alias-label-secondary)}
@@ -287,15 +289,17 @@ window.__ModuleLoader__.load({
 .wb-chevron-open{transform:rotate(90deg)}
 .wb-card-body{display:flex;flex-direction:column;flex:1;gap:12px;padding:14px 16px 16px;min-height:0}
 .wb-card-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.wb-rows{display:flex;flex-direction:column;gap:8px;max-height:236px;overflow:auto;scrollbar-gutter:stable;padding-right:2px}
-.wb-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 12px;border:.5px solid var(--dsw-alias-border-l4);border-radius:12px}
-.wb-row-active{border-color:color-mix(in srgb, var(--dsw-alias-state-business-primary,#4b6bff) 55%, transparent);background:color-mix(in srgb, var(--dsw-alias-state-business-primary,#4b6bff) 5%, transparent)}
-.wb-row-lead{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
-.wb-row-main{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
-.wb-row-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;font-weight:600;line-height:21px}
+.wb-rows{display:flex;flex-direction:column;gap:8px;max-height:300px;overflow:auto;scrollbar-gutter:stable;padding-right:2px}
+.wb-account{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border:.5px solid var(--dsw-alias-border-l4);border-radius:12px}
+.wb-account-active{border-color:color-mix(in srgb, var(--dsw-alias-state-business-primary,#4b6bff) 55%, transparent);background:color-mix(in srgb, var(--dsw-alias-state-business-primary,#4b6bff) 5%, transparent)}
+.wb-account-top{display:flex;align-items:center;gap:10px;min-width:0}
+.wb-account-name{display:flex;flex-direction:column;gap:1px;min-width:0;flex:1}
+.wb-account-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;font-weight:600;line-height:20px}
+.wb-account-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:11px;line-height:17px;color:var(--dsw-alias-label-tertiary);overflow-wrap:anywhere}
+.wb-account-meta>span+span::before{content:"·";margin-right:6px;opacity:.55}
+.wb-account-uid{font-size:10.5px}
+.wb-account-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding-left:40px}
 .wb-row-title-text{overflow-wrap:anywhere}
-.wb-row-sub{font-size:12px;line-height:18px;color:var(--dsw-alias-label-tertiary);overflow-wrap:anywhere}
-.wb-row-actions{display:flex;align-items:center;gap:4px;flex-wrap:wrap;flex:none}
 .wb-chip{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:6px;font-size:11px;line-height:1;font-weight:500;white-space:nowrap;background:var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.05));color:var(--dsw-alias-label-secondary)}
 .wb-chip-accent{background:var(--dsw-alias-state-business-primary,#4b6bff);color:#fff}
 .wb-chip-warn{background:var(--dsw-alias-bg-warning,rgba(191,120,0,.14));color:var(--dsw-alias-label-warning,#8a5a00)}
@@ -382,37 +386,43 @@ window.__ModuleLoader__.load({
     }
 
     /**
-     * One card in the panel grid. The whole title area toggles it.
+     * One card in the panel grid. Unless `fixed`, the whole title area toggles it.
      *
-     * @param {{ title: string, subtitle?: string, wide?: boolean, open: boolean, onToggle: Function, actions?: Array<any>, children?: Array<any> }} props - Props.
+     * @param {{ title: string, subtitle?: string, icon?: object, wide?: boolean, fixed?: boolean, open?: boolean, onToggle?: Function, actions?: Array<any>, children?: Array<any> }} props - Props.
      * @returns {any} Element.
      */
-    function Card({ title, subtitle, icon, wide, open, onToggle, actions, children }) {
+    function Card({ title, subtitle, icon, wide, fixed, open, onToggle, actions, children }) {
       const classes = ['wb-card']
       if (wide === true) classes.push('wb-card-wide')
-      if (open !== true) classes.push('wb-card-close')
+      const expanded = fixed === true || open === true
+      if (!expanded) classes.push('wb-card-close')
+      const parts = [
+        icon === undefined ? null : h('span', { className: 'wb-card-icon wb-card-icon-' + icon.tone }, icon.node()),
+        h('span', { className: 'wb-card-title' }, title),
+        subtitle !== undefined && subtitle !== '' ? h('span', { className: 'wb-card-sub' }, subtitle) : null,
+      ]
       return h(
         'section',
         { className: classes.join(' ') },
         h(
           'div',
           { className: 'wb-card-head' },
-          h(
-            'button',
-            {
-              type: 'button',
-              className: 'wb-card-titles',
-              'aria-expanded': open ? 'true' : 'false',
-              onClick: onToggle,
-            },
-            h('span', { className: open ? 'wb-chevron wb-chevron-open' : 'wb-chevron' }, chevron()),
-            icon === undefined ? null : h('span', { className: 'wb-card-icon wb-card-icon-' + icon.tone }, icon.node()),
-            h('span', { className: 'wb-card-title' }, title),
-            subtitle !== undefined && subtitle !== '' ? h('span', { className: 'wb-card-sub' }, subtitle) : null,
-          ),
+          fixed === true
+            ? h('div', { className: 'wb-card-titles wb-card-titles-static' }, ...parts)
+            : h(
+                'button',
+                {
+                  type: 'button',
+                  className: 'wb-card-titles',
+                  'aria-expanded': open === true ? 'true' : 'false',
+                  onClick: onToggle,
+                },
+                h('span', { className: open === true ? 'wb-chevron wb-chevron-open' : 'wb-chevron' }, chevron()),
+                ...parts,
+              ),
           actions !== undefined && actions.length > 0 ? h('div', { className: 'wb-card-actions' }, ...actions) : null,
         ),
-        open ? h('div', { className: 'wb-card-body' }, ...(children ?? [])) : null,
+        expanded ? h('div', { className: 'wb-card-body' }, ...(children ?? [])) : null,
       )
     }
 
@@ -432,7 +442,7 @@ window.__ModuleLoader__.load({
       const [credits, setCredits] = useState(null)
       const [creditsBusy, setCreditsBusy] = useState(false)
       const [creditsError, setCreditsError] = useState('')
-      const [open, setOpen] = useState({ accounts: true, connection: true, models: false })
+      const [open, setOpen] = useState({ models: false })
       const [login, setLogin] = useState(null)
       const [loginRegion, setLoginRegion] = useState('cn')
       const [catalog, setCatalog] = useState(null)
@@ -517,7 +527,6 @@ window.__ModuleLoader__.load({
             if (value.status === 'done') {
               setStatus(value.state ?? (await call('status')))
               setLogin({ ...login, status: 'done' })
-              setOpen((current) => ({ ...current, accounts: true }))
               void refresh()
               void loadCatalog()
               setMessage({ kind: 'ok', text: tr('loginDone') })
@@ -771,45 +780,63 @@ window.__ModuleLoader__.load({
 
       const accountRows = (accounts?.accounts ?? []).map((account) => {
         const title = account.label || account.nickname || account.uid || account.id
-        const detail = [account.nickname, account.uid, account.domain].filter(
-          (part) => typeof part === 'string' && part !== '',
-        )
+        const meta = []
+        if (typeof account.nickname === 'string' && account.nickname !== '' && account.nickname !== title) {
+          meta.push(account.nickname)
+        }
+        if (typeof account.domain === 'string' && account.domain !== '') meta.push(account.domain)
+        if (typeof account.expiresAt === 'number' && account.expiresAt > 0) {
+          meta.push(tr('expiry') + ' ' + new Date(account.expiresAt).toLocaleDateString())
+        }
+        const shortUid =
+          typeof account.uid === 'string' && account.uid !== '' ? account.uid.slice(0, 8) : ''
         return h(
           'div',
-          { key: account.id, className: account.active ? 'wb-row wb-row-active' : 'wb-row' },
+          { key: account.id, className: account.active ? 'wb-account wb-account-active' : 'wb-account' },
           h(
             'div',
-            { className: 'wb-row-lead' },
+            { className: 'wb-account-top' },
             h(
               'span',
-              { className: 'wb-avatar', style: { background: account.active ? 'var(--dsw-alias-state-business-primary,#4b6bff)' : 'var(--dsw-alias-label-tertiary,#8b949e)' } },
+              {
+                className: 'wb-avatar',
+                style: {
+                  background: account.active
+                    ? 'var(--dsw-alias-state-business-primary,#4b6bff)'
+                    : 'var(--dsw-alias-label-tertiary,#8b949e)',
+                },
+              },
               initialOf(title),
             ),
             h(
               'div',
-              { className: 'wb-row-main' },
+              { className: 'wb-account-name' },
               h(
                 'span',
-                { className: 'wb-row-title' },
+                { className: 'wb-account-title' },
                 h('span', { className: 'wb-row-title-text' }, title),
                 account.active ? h('span', { className: 'wb-chip wb-chip-accent' }, tr('active')) : null,
               ),
-              detail.length > 0 ? h('span', { className: 'wb-row-sub' }, detail.join(' · ')) : null,
-              typeof account.expiresAt === 'number' && account.expiresAt > 0
-                ? h('span', { className: 'wb-row-sub' }, tr('expiry') + ' ' + new Date(account.expiresAt).toLocaleString())
+              meta.length > 0 || shortUid !== ''
+                ? h(
+                    'span',
+                    { className: 'wb-account-meta' },
+                    ...meta.map((part) => h('span', { key: part }, part)),
+                    shortUid === '' ? null : h('span', { className: 'wb-mono wb-account-uid' }, shortUid),
+                  )
                 : null,
             ),
           ),
           h(
             'div',
-            { className: 'wb-row-actions' },
+            { className: 'wb-account-actions' },
             account.active
               ? null
               : h(
                   'button',
                   {
                     type: 'button',
-                    className: 'wb-btn',
+                    className: 'wb-btn wb-btn-sm',
                     disabled: accountBusy !== '',
                     onClick: () => {
                       void onSwitch(account.id)
@@ -821,7 +848,7 @@ window.__ModuleLoader__.load({
               'button',
               {
                 type: 'button',
-                className: 'wb-btn wb-btn-ghost',
+                className: 'wb-btn wb-btn-ghost wb-btn-sm',
                 disabled: accountBusy !== '',
                 onClick: () => {
                   void onRename(account)
@@ -833,7 +860,7 @@ window.__ModuleLoader__.load({
               'button',
               {
                 type: 'button',
-                className: 'wb-btn wb-btn-ghost',
+                className: 'wb-btn wb-btn-ghost wb-btn-sm',
                 disabled: accountBusy !== '',
                 onClick: () => {
                   void onRemove(account.id)
@@ -974,7 +1001,10 @@ window.__ModuleLoader__.load({
               className: 'wb-btn wb-btn-primary',
               disabled: busy !== '',
               onClick: () => {
-                setOpen((current) => ({ ...current, connection: true }))
+                const target = typeof document === 'undefined' ? null : document.getElementById('wb-login')
+                if (target !== null && typeof target.scrollIntoView === 'function') {
+                  target.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                }
               },
             },
             tr('addAccount'),
@@ -1122,7 +1152,7 @@ window.__ModuleLoader__.load({
         h('p', { className: 'wb-hint' }, tr('storageNote')),
         h(
           'div',
-          { className: 'wb-sub' },
+          { className: 'wb-sub', id: 'wb-login' },
           h('span', { className: 'wb-sub-title' }, tr('secLogin')),
         ),
         ...loginBlock,
@@ -1221,16 +1251,14 @@ window.__ModuleLoader__.load({
                   accounts !== null
                     ? String(accounts.accounts.length) + ' ' + tr('accountsUnit')
                     : undefined,
-                open: open.accounts,
-                onToggle: () => toggle('accounts'),
+                fixed: true,
                 children: accountsBody,
               }),
               Card({
                 title: tr('secConnection'),
                 icon: { tone: 'connection', node: () => CardIcon('connection', 15) },
                 subtitle: status === null ? undefined : status.signedIn ? tr('signedIn') : tr('notSignedIn'),
-                open: open.connection,
-                onToggle: () => toggle('connection'),
+                fixed: true,
                 children: connectionBody,
               }),
               Card({

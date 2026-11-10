@@ -17,7 +17,7 @@ The shim adds the WorkBuddy bearer token and account headers (`x-user-id`, `x-en
 
 The model roster is read from WorkBuddy's own app-channel catalog after sign-in (54 chat models on the CN gateway, 23 on the global gateway), with a built-in 20-model snapshot as fallback. The settings tab lists each model's reasoning levels, credit multiplier, and active or upcoming promotion window; **刷新目录** re-reads the catalog without restarting DSH.
 
-The panel is a **standalone sidebar page**: click the WorkBuddy icon in the left rail (directly above 「More」) to open it. It is a card grid in the order **accounts → connection → models**: the accounts card lists accounts with their credits, the connection card holds status, the connection test, and browser sign-in, and the models card spans the full row with the catalog, reasoning levels, multipliers, and offers. Wide viewports show two cards per row with both cards stretched to the same height (the models card takes its own row); narrow viewports fall back to one. The models table is compact — 18px chips, one-line names with the raw id beside them, ellipsised promotion copy — and scrolls inside its card. Colour is meaningful: tinted card-header glyphs, an initial avatar per account, a status dot on the connection state, and credit bars that turn amber below 30% and red below 10%. The rail glyph and page mark are monochrome line art that follows the theme.
+The panel is a **standalone sidebar page**: click the WorkBuddy icon in the left rail (directly above 「More」) to open it. It is a card grid in the order **accounts → connection → models**. The accounts and connection cards are **fixed open** and cannot be collapsed; only the models card toggles from its header. Account rows are now two-tier: an initial avatar and the account name (with a "Current" chip) on top, then one 11px muted line holding nickname, domain, token expiry, and the first 8 characters of the uid, with the switch / rename / remove buttons on their own left-aligned row instead of squeezing the name from the right. The accounts card keeps the credit total, per-package bars, and expiry, pinned to the card bottom. Wide viewports put the accounts and connection cards side by side at equal height with the models card spanning the full row; below 860px everything stacks. Colour is meaningful: tinted card-header glyphs, account avatars, a status dot on the connection state, and credit bars that turn amber below 30% and red below 10%. The rail glyph and page mark are monochrome line art that follows the theme.
 
 ## Requirements
 
@@ -29,7 +29,7 @@ The panel is a **standalone sidebar page**: click the WorkBuddy icon in the left
 From a release asset (recommended):
 
 ```sh
-dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.7.0.tgz
+dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.8.0.tgz
 ```
 
 From source:

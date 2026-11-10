@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.8.0 — 2026-11-10
+
+- **The accounts and connection cards are fixed open.** `Card` gained a `fixed`
+  prop: those two cards render their body unconditionally and their header is a
+  plain `div` (no chevron, no toggle button), so there is nothing to collapse.
+  Only the models card still toggles. The `open` state shrank to `{ models: false }`.
+- **Account rows were rebuilt for legibility.** Each account is now a two-tier
+  block: an initial avatar plus the account name and the 「当前」 chip on the first
+  line, then an 11px muted meta line with the nickname, domain, token expiry date
+  and the first 8 characters of the uid (full uid removed), with switch / rename /
+  remove on their own left-aligned row at 26px height. The list cap grew from
+  236px to 300px because rows are taller.
+- **「添加账号」 now scrolls to the sign-in block** inside the connection card
+  (`#wb-login` via `scrollIntoView`) instead of trying to expand a card that can
+  no longer collapse.
+- The CSS class audit is clean: 97 defined classes, 92 used, the remainder all
+  conditional (`wb-card-icon-*`, `wb-bar-ok/warn/low`).
+
 ## 0.7.0 — 2026-11-10
 
 - **The accounts and connection cards now share a row baseline.** The grid uses
