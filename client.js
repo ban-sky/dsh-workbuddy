@@ -350,7 +350,7 @@ window.__ModuleLoader__.load({
     }
 
     const CSS = `
-.wb-page{--wb-on-solid:#fff;width:100%;min-width:0;height:100%;min-height:0;display:flex;overflow:hidden;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);font-family:var(--dsw-font-family,inherit);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;animation:wb-fade .16s ease-out both}
+.wb-page{width:100%;min-width:0;height:100%;min-height:0;display:flex;overflow:hidden;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);font-family:var(--dsw-font-family,inherit);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased;animation:wb-fade .16s ease-out both}
 @keyframes wb-fade{from{opacity:0}to{opacity:1}}
 @keyframes wb-rise{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.wb-page,.wb-card{animation:none!important}.wb-bar-fill,.wb-chevron{transition:none!important}}
@@ -393,7 +393,7 @@ window.__ModuleLoader__.load({
 .wb-card-icon-models{background:color-mix(in srgb, var(--dsw-alias-state-warn-primary,#f59e0b) 16%, transparent);color:color-mix(in srgb, var(--dsw-alias-state-warn-primary,#f59e0b) 60%, var(--dsw-alias-label-primary))}
 .wb-card-icon-usage{background:color-mix(in srgb, var(--dsw-alias-state-business-primary,#4b6bff) 12%, transparent);color:color-mix(in srgb, var(--dsw-alias-state-business-primary,#4b6bff) 62%, var(--dsw-alias-label-primary))}
 .wb-avatar{width:30px;height:30px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:9px;background:var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.06));color:var(--dsw-alias-label-secondary);font-size:12px;font-weight:600;line-height:1;letter-spacing:.02em}
-.wb-avatar-active{background:var(--dsw-alias-state-business-primary,#4b6bff);color:var(--wb-on-solid,#fff)}
+.wb-avatar-active{background:color-mix(in srgb, var(--dsw-alias-state-business-primary,#4b6bff) 18%, transparent);color:color-mix(in srgb, var(--dsw-alias-state-business-primary,#4b6bff) 62%, var(--dsw-alias-label-primary))}
 .wb-dot{width:7px;height:7px;flex:none;border-radius:50%;display:inline-block}
 .wb-dot-on{background:var(--dsw-alias-state-success-primary,#22c55e)}
 .wb-dot-off{background:var(--dsw-alias-state-warn-primary,#f59e0b)}
@@ -415,9 +415,9 @@ window.__ModuleLoader__.load({
 .wb-account-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding-left:40px}
 .wb-row-title-text{overflow-wrap:anywhere}
 .wb-chip{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:6px;font-size:11px;line-height:1;font-weight:500;white-space:nowrap;background:var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.05));color:var(--dsw-alias-label-secondary)}
-.wb-chip-accent{background:var(--dsw-alias-state-business-primary,#4b6bff);color:var(--wb-on-solid,#fff)}
+.wb-chip-accent{background:color-mix(in srgb, var(--dsw-alias-state-business-primary,#4b6bff) 16%, transparent);color:color-mix(in srgb, var(--dsw-alias-state-business-primary,#4b6bff) 62%, var(--dsw-alias-label-primary))}
 .wb-chip-warn{background:color-mix(in srgb, var(--dsw-alias-state-warn-primary,#f59e0b) 16%, transparent);color:color-mix(in srgb, var(--dsw-alias-state-warn-primary,#f59e0b) 60%, var(--dsw-alias-label-primary))}
-.wb-chip-solid{color:var(--wb-on-solid,#fff)}
+.wb-chip-solid{background:color-mix(in srgb, var(--wb-chip-c,var(--dsw-alias-state-business-primary,#4b6bff)) 16%, transparent);color:color-mix(in srgb, var(--wb-chip-c,var(--dsw-alias-state-business-primary,#4b6bff)) 62%, var(--dsw-alias-label-primary))}
 .wb-btn{appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:30px;padding:0 12px;border-radius:9px;border:.5px solid var(--dsw-alias-border-l3);background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:13px;line-height:1;cursor:pointer;white-space:nowrap;transition:background .12s ease,opacity .12s ease}
 .wb-btn:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}
 .wb-btn:focus-visible{outline:2px solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:2px}
@@ -847,7 +847,7 @@ window.__ModuleLoader__.load({
               'span',
               {
                 className: color ? 'wb-chip wb-chip-solid' : 'wb-chip',
-                style: color ? { background: color } : undefined,
+                style: color ? { '--wb-chip-c': color } : undefined,
               },
               label,
             )
@@ -874,7 +874,7 @@ window.__ModuleLoader__.load({
                     'span',
                     {
                       className: model.tier.color ? 'wb-chip wb-chip-solid' : 'wb-chip',
-                      style: model.tier.color ? { background: model.tier.color } : undefined,
+                      style: model.tier.color ? { '--wb-chip-c': model.tier.color } : undefined,
                       title: model.tier.text,
                     },
                     model.tier.label,

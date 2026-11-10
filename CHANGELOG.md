@@ -17,14 +17,22 @@
   on the semantic state tokens are gone; the only literals left are the token
   fallbacks themselves. An audit (`var(--dsw-*)` used in the panel CSS vs every
   token the theme defines) now reports zero undefined tokens.
-- **Text on saturated fills no longer flips.** `--wb-on-solid: #fff` is defined
-  on `.wb-page` for avatars, accent chips and the solid-chip label, because those
-  fills stay saturated in both themes. Brand fills that *do* invert (primary
-  button, the login link) use `--dsw-alias-label-primary-foreground` +
-  `--dsw-alias-button-primary-fill`, which flip with them.
+- **Text on coloured fills is now a tint, not white type.** Solid chips used to
+  hardcode white on whatever colour upstream sent, and several of those
+  (amber `#f59e0b`, green `#22c55e`) only reach ~2.2:1 with white. Chips now pass
+  the colour through `--wb-chip-c` and render a 16% wash with 62%-mixed text, so
+  any upstream colour reads on both themes. The account avatar and the 「当前」
+  chip follow the same rule. Brand fills that genuinely invert (the primary
+  button and the login link) keep `--dsw-alias-label-primary-foreground` over
+  `--dsw-alias-button-primary-fill`, which flip with the theme.
+- **Cards sit on the theme's raised surface.** `.wb-card` and the sticky table
+  header use `--dsw-alias-bg-layer-1` instead of `--dsw-alias-bg-base` — identical
+  white in light mode, `#232324` on `#151517` in dark, so the cards read as
+  separate surfaces. The page also inherits `--dsw-font-family` rather than the
+  browser default stack.
 - Account avatars moved from an inline style to `.wb-avatar` /
   `.wb-avatar-active`: inactive accounts get a tinted surface with secondary
-  text, the active one keeps the solid brand fill.
+  text, the active one a brand wash.
 
 ## 0.9.1 — 2026-11-10
 
