@@ -1,5 +1,31 @@
 # Changelog
 
+## 0.9.2 — 2026-11-10
+
+- **Fixed the dark-mode text that was nearly invisible.** The panel referenced
+  eight design tokens that the theme never defines —
+  `--dsw-alias-label-success/-warning/-danger`, `--dsw-alias-bg-success/-warning/-danger`,
+  `--dsw-alias-button-primary-label` and `--dsw-font-mono`. Because a missing
+  custom property invalidates the whole declaration, every one of those rules
+  silently fell back to a hardcoded light-mode hex (`#17663a`, `#8a5a00`,
+  `#b42318`, `#fff`), so the signed-in badge, warning chips, error banners and
+  danger buttons stayed dark green / dark red on a dark surface.
+  They now use the real theme tokens — `--dsw-alias-state-success-primary`,
+  `--dsw-alias-state-warn-primary`, `--dsw-alias-state-error-primary` — mixed
+  with `--dsw-alias-label-primary` for text, so contrast follows the theme.
+- **No hardcoded colours remain in the panel CSS.** All light-mode hex fallbacks
+  on the semantic state tokens are gone; the only literals left are the token
+  fallbacks themselves. An audit (`var(--dsw-*)` used in the panel CSS vs every
+  token the theme defines) now reports zero undefined tokens.
+- **Text on saturated fills no longer flips.** `--wb-on-solid: #fff` is defined
+  on `.wb-page` for avatars, accent chips and the solid-chip label, because those
+  fills stay saturated in both themes. Brand fills that *do* invert (primary
+  button, the login link) use `--dsw-alias-label-primary-foreground` +
+  `--dsw-alias-button-primary-fill`, which flip with them.
+- Account avatars moved from an inline style to `.wb-avatar` /
+  `.wb-avatar-active`: inactive accounts get a tinted surface with secondary
+  text, the active one keeps the solid brand fill.
+
 ## 0.9.1 — 2026-11-10
 
 - **Opening the panel feels instant.** The page fades in over 160 ms and the card

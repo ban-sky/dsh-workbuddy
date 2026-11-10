@@ -41,7 +41,7 @@ DSH Agent 循环
 推荐从 Release 安装：
 
 ```sh
-dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.9.1.tgz
+dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.9.2.tgz
 ```
 
 从源码安装：
