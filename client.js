@@ -235,6 +235,17 @@ window.__ModuleLoader__.load({
       }
     }
 
+    /**
+     * First visible character of an account label, used as the avatar text.
+     *
+     * @param {string} value - Account title.
+     * @returns {string} One character.
+     */
+    function initialOf(value) {
+      const text = typeof value === 'string' ? value.trim() : ''
+      return text === '' ? '?' : Array.from(text)[0].toUpperCase()
+    }
+
     const CSS = `
 .wb-page{width:100%;min-width:0;height:100%;min-height:0;display:flex;overflow:hidden;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);font-size:14px;line-height:1.6;-webkit-font-smoothing:antialiased}
 .wb-scroll{flex:1;min-width:0;min-height:0;overflow:auto;scrollbar-gutter:stable;--dsh-scrollbar-width:9px;--dsh-scrollbar-thumb-border:2px}
@@ -254,23 +265,32 @@ window.__ModuleLoader__.load({
 .wb-banner{margin:0 0 16px;padding:10px 14px;border-radius:12px;font-size:13px;line-height:21px;word-break:break-word}
 .wb-banner-ok{background:var(--dsw-alias-bg-success,rgba(46,160,67,.1));color:var(--dsw-alias-label-success,#17663a)}
 .wb-banner-error{background:var(--dsw-alias-bg-danger,rgba(229,72,77,.1));color:var(--dsw-alias-label-danger,#b42318)}
-.wb-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:start}
+.wb-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:stretch}
 .wb-card-wide{grid-column:1/-1}
 @media(max-width:860px){.wb-cards{grid-template-columns:minmax(0,1fr)}}
-.wb-card{min-width:0;border:.5px solid var(--dsw-alias-border-l3);border-radius:16px;background:var(--dsw-alias-bg-base);overflow:hidden}
+.wb-card{min-width:0;display:flex;flex-direction:column;border:.5px solid var(--dsw-alias-border-l3);border-radius:16px;background:var(--dsw-alias-bg-base);overflow:hidden}
 .wb-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:50px;padding:11px 16px;border-bottom:.5px solid var(--dsw-alias-border-l4)}
 .wb-card-close .wb-card-head{border-bottom-color:transparent}
 .wb-card-titles{display:flex;align-items:center;gap:9px;min-width:0;padding:2px 4px 2px 0;margin:-2px 0;border:0;background:none;color:inherit;font:inherit;text-align:left;cursor:pointer;border-radius:8px}
 .wb-card-titles:focus-visible{outline:2px solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:2px}
 .wb-card-title{font-size:14px;font-weight:600;line-height:22px;white-space:nowrap}
+.wb-card-icon{width:26px;height:26px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;background:var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.05));color:var(--dsw-alias-label-secondary)}
+.wb-card-icon-accounts{background:color-mix(in srgb, var(--dsw-alias-state-business-primary,#4b6bff) 10%, transparent);color:var(--dsw-alias-state-business-primary,#4b6bff)}
+.wb-card-icon-connection{background:color-mix(in srgb, var(--dsw-alias-state-success-primary,#2ea043) 12%, transparent);color:var(--dsw-alias-state-success-primary,#17663a)}
+.wb-card-icon-models{background:color-mix(in srgb, var(--dsw-alias-state-warn-primary,#bf7800) 14%, transparent);color:var(--dsw-alias-label-warning,#8a5a00)}
+.wb-avatar{width:30px;height:30px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:9px;color:#fff;font-size:12px;font-weight:600;line-height:1;letter-spacing:.02em}
+.wb-dot{width:7px;height:7px;flex:none;border-radius:50%;display:inline-block}
+.wb-dot-on{background:var(--dsw-alias-state-success-primary,#2ea043)}
+.wb-dot-off{background:var(--dsw-alias-state-warn-primary,#bf7800)}
 .wb-card-sub{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;background:var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.05));color:var(--dsw-alias-label-tertiary);font-size:11px;line-height:1;font-weight:500;white-space:nowrap;font-variant-numeric:tabular-nums}
 .wb-chevron{width:11px;height:11px;flex:none;color:var(--dsw-alias-label-tertiary);transition:transform .15s ease}
 .wb-chevron-open{transform:rotate(90deg)}
-.wb-card-body{display:flex;flex-direction:column;gap:12px;padding:14px 16px 16px}
+.wb-card-body{display:flex;flex-direction:column;flex:1;gap:12px;padding:14px 16px 16px;min-height:0}
 .wb-card-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.wb-rows{display:flex;flex-direction:column;gap:8px}
+.wb-rows{display:flex;flex-direction:column;gap:8px;max-height:236px;overflow:auto;scrollbar-gutter:stable;padding-right:2px}
 .wb-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 12px;border:.5px solid var(--dsw-alias-border-l4);border-radius:12px}
-.wb-row-active{border-color:var(--dsw-alias-state-business-primary)}
+.wb-row-active{border-color:color-mix(in srgb, var(--dsw-alias-state-business-primary,#4b6bff) 55%, transparent);background:color-mix(in srgb, var(--dsw-alias-state-business-primary,#4b6bff) 5%, transparent)}
+.wb-row-lead{display:flex;align-items:center;gap:10px;min-width:0;flex:1}
 .wb-row-main{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
 .wb-row-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px;font-weight:600;line-height:21px}
 .wb-row-title-text{overflow-wrap:anywhere}
@@ -297,10 +317,11 @@ window.__ModuleLoader__.load({
 .wb-kv-row:first-child{padding-top:0}
 .wb-kv-key{flex:none;font-size:12px;line-height:18px;color:var(--dsw-alias-label-tertiary)}
 .wb-kv-value{min-width:0;text-align:right;font-size:13px;line-height:20px;overflow-wrap:anywhere}
+.wb-state{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .wb-metric{display:flex;align-items:baseline;gap:7px;flex-wrap:wrap}
 .wb-metric-value{font-size:28px;font-weight:600;line-height:1.15;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
 .wb-metric-unit{font-size:12px;line-height:18px;color:var(--dsw-alias-label-tertiary)}
-.wb-credits{display:flex;flex-direction:column;gap:12px;padding-top:13px;border-top:.5px solid var(--dsw-alias-border-l4)}
+.wb-credits{display:flex;flex-direction:column;gap:12px;margin-top:auto;padding-top:13px;border-top:.5px solid var(--dsw-alias-border-l4)}
 .wb-credits-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .wb-credit-list{display:flex;flex-direction:column;gap:13px}
 .wb-credit-row{display:flex;flex-direction:column;gap:5px}
@@ -308,8 +329,13 @@ window.__ModuleLoader__.load({
 .wb-credit-name{font-size:12px;line-height:19px;overflow-wrap:anywhere}
 .wb-credit-count{font-size:12px;line-height:19px;color:var(--dsw-alias-label-secondary);font-variant-numeric:tabular-nums;white-space:nowrap}
 .wb-credit-meta{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;line-height:17px;color:var(--dsw-alias-label-tertiary)}
+.wb-credit-count-warn{color:var(--dsw-alias-label-warning,#8a5a00)}
+.wb-credit-count-low{color:var(--dsw-alias-state-error-primary,#e5484d)}
 .wb-bar{height:5px;border-radius:999px;background:var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.07));overflow:hidden}
 .wb-bar-fill{height:100%;border-radius:999px;background:var(--dsw-alias-state-business-primary,#4b6bff);transition:width .2s ease}
+.wb-bar-ok{background:var(--dsw-alias-state-success-primary,#2ea043)}
+.wb-bar-warn{background:var(--dsw-alias-state-warn-primary,#bf7800)}
+.wb-bar-low{background:var(--dsw-alias-state-error-primary,#e5484d)}
 .wb-hint{margin:0;font-size:12px;line-height:19px;color:var(--dsw-alias-label-tertiary)}
 .wb-empty{margin:0;padding:22px 0;text-align:center;font-size:13px;line-height:21px;color:var(--dsw-alias-label-tertiary)}
 .wb-login{display:flex;flex-direction:column;gap:9px}
@@ -321,18 +347,19 @@ window.__ModuleLoader__.load({
 .wb-link:hover{opacity:.9}
 .wb-code{font-family:var(--dsw-font-mono,ui-monospace,SFMono-Regular,Menlo,monospace);font-size:11px;line-height:17px;color:var(--dsw-alias-label-tertiary);word-break:break-all;min-width:0}
 .wb-mono{font-family:var(--dsw-font-mono,ui-monospace,SFMono-Regular,Menlo,monospace);font-size:12px;overflow-wrap:anywhere}
-.wb-table-wrap{overflow:auto;margin:0 -16px;padding:0 16px}
-.wb-table{width:100%;border-collapse:collapse;font-size:13px;min-width:520px}
-.wb-table th{position:sticky;top:0;z-index:1;text-align:left;font-weight:500;font-size:11px;line-height:17px;letter-spacing:.01em;color:var(--dsw-alias-label-tertiary);background:var(--dsw-alias-bg-base);padding:8px 10px 8px 0;border-bottom:.5px solid var(--dsw-alias-border-l3);white-space:nowrap}
-.wb-table td{padding:9px 10px 9px 0;border-bottom:.5px solid var(--dsw-alias-border-l4);vertical-align:middle}
+.wb-table-wrap{max-height:340px;overflow:auto;margin:0 -16px;padding:0 16px;scrollbar-gutter:stable}
+.wb-table{width:100%;border-collapse:collapse;font-size:12px;min-width:480px}
+.wb-table th{position:sticky;top:0;z-index:1;text-align:left;font-weight:500;font-size:10.5px;line-height:16px;letter-spacing:.02em;text-transform:uppercase;color:var(--dsw-alias-label-tertiary);background:var(--dsw-alias-bg-base);padding:7px 10px 7px 0;border-bottom:.5px solid var(--dsw-alias-border-l3);white-space:nowrap}
+.wb-table td{padding:5px 10px 5px 0;border-bottom:.5px solid var(--dsw-alias-border-l4);vertical-align:middle}
 .wb-table tr:last-child td{border-bottom:0}
-.wb-model-cell{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:150px}
-.wb-model-text{display:flex;flex-direction:column;gap:1px;min-width:0}
-.wb-model-name{font-size:13px;line-height:20px;font-weight:500}
-.wb-model-id{font-size:11px;line-height:16px;color:var(--dsw-alias-label-tertiary)}
-.wb-chips{display:flex;gap:4px;flex-wrap:wrap}
-.wb-promo-cell{display:flex;flex-direction:column;gap:3px;min-width:130px}
-.wb-promo-text{font-size:11px;line-height:17px;color:var(--dsw-alias-label-tertiary)}
+.wb-model-cell{display:flex;align-items:baseline;gap:6px;min-width:140px}
+.wb-model-text{display:flex;align-items:baseline;gap:6px;min-width:0;flex-wrap:wrap}
+.wb-model-name{font-size:12.5px;line-height:18px;font-weight:500}
+.wb-model-id{font-size:10.5px;line-height:16px;color:var(--dsw-alias-label-tertiary)}
+.wb-chips{display:flex;gap:3px;flex-wrap:wrap;align-items:center}
+.wb-chips-sm .wb-chip{height:18px;padding:0 6px;font-size:10.5px;border-radius:5px}
+.wb-promo-cell{display:flex;align-items:center;gap:4px;min-width:96px}
+.wb-promo-text{max-width:170px;font-size:11px;line-height:17px;color:var(--dsw-alias-label-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 `
 
@@ -360,7 +387,7 @@ window.__ModuleLoader__.load({
      * @param {{ title: string, subtitle?: string, wide?: boolean, open: boolean, onToggle: Function, actions?: Array<any>, children?: Array<any> }} props - Props.
      * @returns {any} Element.
      */
-    function Card({ title, subtitle, wide, open, onToggle, actions, children }) {
+    function Card({ title, subtitle, icon, wide, open, onToggle, actions, children }) {
       const classes = ['wb-card']
       if (wide === true) classes.push('wb-card-wide')
       if (open !== true) classes.push('wb-card-close')
@@ -379,6 +406,7 @@ window.__ModuleLoader__.load({
               onClick: onToggle,
             },
             h('span', { className: open ? 'wb-chevron wb-chevron-open' : 'wb-chevron' }, chevron()),
+            icon === undefined ? null : h('span', { className: 'wb-card-icon wb-card-icon-' + icon.tone }, icon.node()),
             h('span', { className: 'wb-card-title' }, title),
             subtitle !== undefined && subtitle !== '' ? h('span', { className: 'wb-card-sub' }, subtitle) : null,
           ),
@@ -698,7 +726,7 @@ window.__ModuleLoader__.load({
             null,
             h(
               'div',
-              { className: 'wb-chips' },
+              { className: 'wb-chips wb-chips-sm' },
               ...(model.efforts ?? []).map((effort) =>
                 h(
                   'span',
@@ -723,14 +751,18 @@ window.__ModuleLoader__.load({
                 ? h('span', { className: 'wb-promo-text' }, tr('promoNone'))
                 : h(
                     'div',
-                    { className: 'wb-chips' },
+                    { className: 'wb-chips wb-chips-sm' },
                     badge(model.promotion.label, model.promotion.color),
                     model.promotion.status === 'upcoming'
                       ? h('span', { className: 'wb-chip wb-chip-warn' }, tr('promoUpcoming'))
                       : null,
                   ),
               model.promotion !== undefined && model.promotion !== null && promoSummary(model.promotion) !== ''
-                ? h('span', { className: 'wb-promo-text' }, promoSummary(model.promotion))
+                ? h(
+                    'span',
+                    { className: 'wb-promo-text', title: promoSummary(model.promotion) },
+                    promoSummary(model.promotion),
+                  )
                 : null,
             ),
           ),
@@ -747,17 +779,26 @@ window.__ModuleLoader__.load({
           { key: account.id, className: account.active ? 'wb-row wb-row-active' : 'wb-row' },
           h(
             'div',
-            { className: 'wb-row-main' },
+            { className: 'wb-row-lead' },
             h(
               'span',
-              { className: 'wb-row-title' },
-              h('span', { className: 'wb-row-title-text' }, title),
-              account.active ? h('span', { className: 'wb-chip wb-chip-accent' }, tr('active')) : null,
+              { className: 'wb-avatar', style: { background: account.active ? 'var(--dsw-alias-state-business-primary,#4b6bff)' : 'var(--dsw-alias-label-tertiary,#8b949e)' } },
+              initialOf(title),
             ),
-            detail.length > 0 ? h('span', { className: 'wb-row-sub' }, detail.join(' · ')) : null,
-            typeof account.expiresAt === 'number' && account.expiresAt > 0
-              ? h('span', { className: 'wb-row-sub' }, tr('expiry') + ' ' + new Date(account.expiresAt).toLocaleString())
-              : null,
+            h(
+              'div',
+              { className: 'wb-row-main' },
+              h(
+                'span',
+                { className: 'wb-row-title' },
+                h('span', { className: 'wb-row-title-text' }, title),
+                account.active ? h('span', { className: 'wb-chip wb-chip-accent' }, tr('active')) : null,
+              ),
+              detail.length > 0 ? h('span', { className: 'wb-row-sub' }, detail.join(' · ')) : null,
+              typeof account.expiresAt === 'number' && account.expiresAt > 0
+                ? h('span', { className: 'wb-row-sub' }, tr('expiry') + ' ' + new Date(account.expiresAt).toLocaleString())
+                : null,
+            ),
           ),
           h(
             'div',
@@ -806,6 +847,7 @@ window.__ModuleLoader__.load({
 
       const creditPackages = (credits?.packages ?? []).map((entry, index) => {
         const ratio = entry.size > 0 ? Math.max(0, Math.min(1, entry.remain / entry.size)) : 0
+        const tone = ratio <= 0.1 ? ' wb-bar-low' : ratio <= 0.3 ? ' wb-bar-warn' : ' wb-bar-ok'
         const meta = []
         if (entry.monthly === true) meta.push(tr('creditsMonthly'))
         if (typeof entry.refreshAt === 'number' && entry.refreshAt > 0) {
@@ -821,12 +863,22 @@ window.__ModuleLoader__.load({
             'div',
             { className: 'wb-credit-row-head' },
             h('span', { className: 'wb-credit-name' }, entry.name || tr('creditsPackage')),
-            h('span', { className: 'wb-credit-count' }, String(entry.remain) + ' / ' + String(entry.size)),
+            h(
+              'span',
+              {
+                className:
+                  ratio <= 0.1 ? 'wb-credit-count wb-credit-count-low' : ratio <= 0.3 ? 'wb-credit-count wb-credit-count-warn' : 'wb-credit-count',
+              },
+              String(entry.remain) + ' / ' + String(entry.size),
+            ),
           ),
           h(
             'div',
             { className: 'wb-bar' },
-            h('div', { className: 'wb-bar-fill', style: { width: String(Math.round(ratio * 100)) + '%' } }),
+            h('div', {
+              className: 'wb-bar-fill' + tone,
+              style: { width: String(Math.round(ratio * 100)) + '%' },
+            }),
           ),
           meta.length > 0
             ? h('div', { className: 'wb-credit-meta' }, ...meta.map((part) => h('span', { key: part }, part)))
@@ -887,7 +939,18 @@ window.__ModuleLoader__.load({
           )
 
       const statusPairs = [
-        [tr('state'), status === null ? '' : status.signedIn ? tr('signedIn') : tr('notSignedIn'), false],
+        [
+          tr('state'),
+          status === null
+            ? ''
+            : h(
+                'span',
+                { className: 'wb-state' },
+                h('span', { className: status.signedIn ? 'wb-dot wb-dot-on' : 'wb-dot wb-dot-off' }),
+                status.signedIn ? tr('signedIn') : tr('notSignedIn'),
+              ),
+          false,
+        ],
         [tr('source'), status === null ? '' : status.saved === true ? tr('sourceSaved') : tr('sourceNone'), false],
         [tr('account'), status === null || status.uid === '' ? null : status.uid, true],
         [tr('expiry'), expiry, false],
@@ -1032,7 +1095,11 @@ window.__ModuleLoader__.load({
                   'div',
                   { key: 'r:' + key, className: 'wb-kv-row' },
                   h('span', { className: 'wb-kv-key' }, key),
-                  h('span', { className: mono === true ? 'wb-kv-value wb-mono' : 'wb-kv-value' }, value),
+                  h(
+                    'span',
+                    { className: mono === true ? 'wb-kv-value wb-mono' : 'wb-kv-value' },
+                    value !== null && typeof value === 'object' ? value : String(value),
+                  ),
                 ),
               ),
             ),
@@ -1149,6 +1216,7 @@ window.__ModuleLoader__.load({
               { className: 'wb-cards' },
               Card({
                 title: tr('secAccounts'),
+                icon: { tone: 'accounts', node: () => CardIcon('accounts', 15) },
                 subtitle:
                   accounts !== null
                     ? String(accounts.accounts.length) + ' ' + tr('accountsUnit')
@@ -1159,6 +1227,7 @@ window.__ModuleLoader__.load({
               }),
               Card({
                 title: tr('secConnection'),
+                icon: { tone: 'connection', node: () => CardIcon('connection', 15) },
                 subtitle: status === null ? undefined : status.signedIn ? tr('signedIn') : tr('notSignedIn'),
                 open: open.connection,
                 onToggle: () => toggle('connection'),
@@ -1166,6 +1235,7 @@ window.__ModuleLoader__.load({
               }),
               Card({
                 title: tr('secModels'),
+                icon: { tone: 'models', node: () => CardIcon('models', 15) },
                 subtitle:
                   catalog !== null
                     ? String(catalog.models.length) +
@@ -1194,6 +1264,36 @@ window.__ModuleLoader__.load({
             ),
           ),
         ),
+      )
+    }
+
+    /**
+     * Stroke-only glyphs used as card header icons.
+     *
+     * @param {string} name - One of `accounts`, `connection`, `models`.
+     * @param {number} size - Pixel size.
+     * @returns {any} Element.
+     */
+    function CardIcon(name, size) {
+      const paths = {
+        accounts: ['M4 6.5h16', 'M4 12h16', 'M4 17.5h10'],
+        connection: ['M8.5 12h7', 'M6 8.5h-.5a3.5 3.5 0 0 0 0 7H6', 'M18 15.5h.5a3.5 3.5 0 0 0 0-7H18'],
+        models: ['M4.5 7.5 12 4l7.5 3.5v9L12 20l-7.5-3.5z', 'M4.5 7.5 12 11l7.5-3.5', 'M12 11v9'],
+      }
+      return h(
+        'svg',
+        {
+          width: size,
+          height: size,
+          viewBox: '0 0 24 24',
+          fill: 'none',
+          stroke: 'currentColor',
+          strokeWidth: '1.7',
+          strokeLinecap: 'round',
+          strokeLinejoin: 'round',
+          'aria-hidden': 'true',
+        },
+        ...(paths[name] ?? []).map((d, i) => h('path', { key: String(i), d })),
       )
     }
 

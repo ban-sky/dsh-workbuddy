@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.7.0 — 2026-11-10
+
+- **The accounts and connection cards now share a row baseline.** The grid uses
+  `align-items: stretch`, each card is a flex column whose body grows to fill the
+  row, and the credits block is pinned to the bottom with `margin-top: auto`, so
+  the two cards end at the same edge regardless of how many accounts exist. The
+  account list is capped at 236px with its own scrollbar so a long list cannot
+  stretch the row.
+- **The models table is much more compact.** Cell padding dropped from 9px to
+  5px, the header is 10.5px uppercase with 7px padding, reasoning and promotion
+  chips use a new `wb-chips-sm` 18px variant, the model name and id sit on one
+  baseline instead of stacked, and promotion copy is a single ellipsised line
+  with the full text in `title`. The table body scrolls at 340px so the card no
+  longer runs long.
+- **Colour is used where it carries meaning.** Each card header has a tinted
+  inline glyph (blue accounts, green connection, amber models); account rows show
+  a coloured initial avatar and a tinted background when active; the connection
+  state row has a success/warn status dot; credit bars and their numeric counts
+  turn amber below 30% and red below 10%.
+- The page keeps the 0.6.0 monochrome mark and theme-token palette; every new
+  colour is derived with `color-mix` from `--dsw-alias-state-*` tokens so light
+  and dark themes stay consistent.
+
 ## 0.6.0 — 2026-11-10
 
 - **The icon is monochrome.** `icon.svg`, the rail glyph, and the page mark
