@@ -1,6 +1,6 @@
 # DSH WorkBuddy
 
-把 **WorkBuddy / CodeBuddy** 账号里的模型接进 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）。在 DSH 设置页完成一次网页登录即可使用，无需在服务器上安装桌面端；对话、工具调用、图片输入和推理等级都走 DSH 正常的 Agent 流程。
+把 **WorkBuddy / CodeBuddy** 账号里的模型接进 [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness)（DSH）。在 DSH 设置页完成一次网页登录即可使用，无需在服务器上安装桌面端；对话、工具调用、图片输入和推理等级都走 DSH 正常的 Agent 流程。支持多账号切换、积分显示和按账号节流。
 
 [English](./README.md) | 中文
 
@@ -17,6 +17,8 @@ DSH Agent 循环
 
 登录后会读取 WorkBuddy 官方应用通道目录（中国站 54 个对话模型，国际站 23 个），失败时回退到内置的 20 个模型快照。设置页会列出每个模型的推理等级、点数倍率和进行中/即将开始的优惠时段；**刷新目录** 可在不重启 DSH 的情况下重新读取。
 
+配置界面是 **设置 → 模型 · WorkBuddy** 下的一整页，四个分组都能折叠：账号（含积分）、网页登录、模型与计费、运行状态。
+
 ## 环境要求
 
 - DSH `0.2.x`，Node.js 22+。
@@ -27,7 +29,7 @@ DSH Agent 循环
 推荐从 Release 安装：
 
 ```sh
-dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.3.0.tgz
+dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.4.0.tgz
 ```
 
 从源码安装：
@@ -43,12 +45,24 @@ dsh plugin --profile web add "$PWD"
 
 ## 登录
 
-1. 打开 **设置 → 插件 → WorkBuddy**。
-2. 选择 **中国站** 或 **国际站**，点击 **生成登录链接**。
-3. 在浏览器完成登录；页面每 2 秒轮询一次并自动保存 token。
-4. 点击 **测试连接** 验证（会发送一次只含 1 个 token 的 `ping`）。
+1. 打开 **设置 → 模型 · WorkBuddy**。
+2. 展开 **网页登录**，选择 **中国站** 或 **国际站**，点击 **生成登录链接**。
+3. 在浏览器完成登录；页面每 2 秒轮询一次并自动保存该账号。
+4. **测试连接** 会发送一次只含 1 个 token 的 `ping`。
 
-token 与 refresh token 保存在 `$DSH_HOME/.workbuddy-credentials.json`（权限 `0600`）；刷新后会写回新 token。**退出登录** 会删除该文件。
+再次登录会作为**新账号**加入，不会覆盖已有账号。
+
+## 多账号
+
+- 最多保存 8 个账号，各自独立的 token、refresh token 与账号头。
+- 点 **切换** 立即把该账号设为当前账号；模型请求、积分查询都只使用当前账号。
+- **重命名** 只改显示名，**移除** 需要点两次确认；移除当前账号会自动切到下一个。
+- 每个账号有独立的设备标识与请求节流，互不阻塞，也不会串用身份。
+- 所有账号保存在 `$DSH_HOME/.workbuddy-credentials.json`（权限 `0600`，原子写入），设备盐值在同目录的 `.device` 文件中；**退出登录** 只移除当前账号。
+
+## 积分
+
+账号分组会显示当前账号的点数余额：总量、每个权益包的剩余/总量进度条、周期结束时间与最近到期时间。数据来自 WorkBuddy 计费接口，仅在本机请求；企业账号读取企业额度表，个人账号读取权益包表。读取失败会显示错误，而不是显示 0。
 
 ## 配置
 
@@ -84,12 +98,12 @@ WorkBuddy 的配额、限流错误会作为普通模型错误返回 DSH。
 ## 开发
 
 ```sh
-npm test        # 58 项测试：credentials、OAuth、模型目录、优惠、HTTP 路由、shim、adapter、插件
+npm test        # 85 项测试：账号存储、设备标识与节流、积分、credentials、OAuth、模型目录、优惠、HTTP 路由、shim、adapter、插件
 npm run verify  # 语法 + manifest + locale/icon 检查
 npm run build   # dist/*.tgz + sha256
 ```
 
-代码结构：`lib/credentials.js`（保存的 token 与刷新）、`lib/oauth.js`（网页登录）、`lib/catalog-source.js`（在线目录与优惠）、`lib/promotions.js`（时段与徽章）、`lib/token-store.js`（0600 文件）、`lib/http.js`（设置页路由）、`lib/shim.js`（本地代理）、`lib/adapter.js`（DSH provider）、`client.js`（含模型表的设置页）。
+代码结构：`lib/token-store.js`（多账号 0600 文件）、`lib/accounts.js`（设备标识与按账号节流）、`lib/credits.js`（积分接口）、`lib/credentials.js`（当前账号的 token 与刷新）、`lib/oauth.js`（网页登录）、`lib/catalog-source.js`（在线目录与优惠）、`lib/promotions.js`（时段与徽章）、`lib/http.js`（设置页路由）、`lib/shim.js`（本地代理）、`lib/adapter.js`（DSH provider）、`client.js`（可折叠的设置分区）。
 
 GitHub Actions 在 Node 22/24 上跑测试，并在打 tag 时发布 Release。
 

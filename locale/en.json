@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "WorkBuddy",
-    "description": "WorkBuddy / CodeBuddy models in DeepSeek Harness: one-time browser sign-in, live catalog with reasoning levels, credit multipliers, and promotion windows; the token stays on this machine."
+    "description": "Bring WorkBuddy / CodeBuddy models into DeepSeek Harness: sign in once at Settings → Models · WorkBuddy to load the official model catalog, reasoning levels, credit multipliers, and promotions, with multi-account isolation, credit balance, and per-account pacing. Tokens never leave this machine."
   }
 }

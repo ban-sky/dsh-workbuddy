@@ -1,6 +1,6 @@
 # DSH WorkBuddy
 
-Use the models of a **WorkBuddy / CodeBuddy** account inside [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness). Sign in once from the DSH settings page (no desktop app needed), then chat, call tools, send images, and pick reasoning levels with the normal DSH agent loop.
+Use the models of a **WorkBuddy / CodeBuddy** account inside [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness). Sign in once from the DSH settings page (no desktop app needed), then chat, call tools, send images, and pick reasoning levels with the normal DSH agent loop. Multiple accounts, a credit balance, and per-account pacing are included.
 
 English | [中文](./README.zh.md)
 
@@ -17,6 +17,8 @@ The shim adds the WorkBuddy bearer token and account headers (`x-user-id`, `x-en
 
 The model roster is read from WorkBuddy's own app-channel catalog after sign-in (54 chat models on the CN gateway, 23 on the global gateway), with a built-in 20-model snapshot as fallback. The settings tab lists each model's reasoning levels, credit multiplier, and active or upcoming promotion window; **刷新目录** re-reads the catalog without restarting DSH.
 
+The panel is a standalone page at **Settings → Models · WorkBuddy** with four collapsible groups: accounts (with credits), browser sign-in, models and billing, and runtime status.
+
 ## Requirements
 
 - DSH `0.2.x`, Node.js 22+.
@@ -27,7 +29,7 @@ The model roster is read from WorkBuddy's own app-channel catalog after sign-in 
 From a release asset (recommended):
 
 ```sh
-dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.3.0.tgz
+dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.4.0.tgz
 ```
 
 From source:
@@ -43,12 +45,24 @@ Restart DSH after installing.
 
 ## Sign in
 
-1. Open **Settings → Plugins → WorkBuddy**.
-2. Choose **中国站** or **国际站**, then click **生成登录链接**.
-3. Complete the login in your browser; the page polls every 2 seconds and saves the token automatically.
-4. Click **测试连接** to verify (sends a one-token `ping`).
+1. Open **Settings → Models · WorkBuddy**.
+2. Expand **网页登录**, choose **中国站** or **国际站**, then click **生成登录链接**.
+3. Complete the login in your browser; the page polls every 2 seconds and saves that account.
+4. **测试连接** sends a one-token `ping`.
 
-The token and its refresh token are stored in `$DSH_HOME/.workbuddy-credentials.json` (mode `0600`). Refreshes write the rotated token back. **退出登录** deletes the file.
+Signing in again adds a **new account** instead of overwriting the existing one.
+
+## Multiple accounts
+
+- Up to 8 accounts, each with its own token, refresh token, and account headers.
+- **切换** makes an account active; model requests and credit lookups only ever use the active account.
+- **重命名** changes only the label, **移除** asks for a second click, and removing the active account promotes the next one.
+- Every account gets its own device identity and request pacing channel, so accounts never block or impersonate each other.
+- All accounts live in `$DSH_HOME/.workbuddy-credentials.json` (mode `0600`, atomic write); the device salt sits next to it in `.device`. **退出登录** removes only the active account.
+
+## Credits
+
+The accounts group shows the active account's credit balance: the total, a remaining/total progress bar per package, cycle end dates, and the nearest expiry. It is read from WorkBuddy's billing endpoint, on this machine only; enterprise accounts use the enterprise quota table and personal accounts use the package table. A failed read shows an error instead of reporting zero.
 
 ## Configuration
 
@@ -84,7 +98,7 @@ Quota and rate-limit errors from WorkBuddy are returned to DSH as normal model e
 ## Development
 
 ```sh
-npm test        # 58 tests: credentials, OAuth, catalog, promotions, HTTP route, shim, adapter, plugin
+npm test        # 85 tests: account store, device identity and pacing, credits, credentials, OAuth, catalog, promotions, HTTP route, shim, adapter, plugin
 npm run verify  # syntax + manifest + locale/icon checks
 npm run build   # dist/*.tgz + sha256
 ```

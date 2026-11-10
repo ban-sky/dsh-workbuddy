@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.4.0 — 2026-11-10
+
+- **The configuration panel moved out of the Plugins page** into a standalone
+  settings section: **设置 → 模型 · WorkBuddy** (slot `settings.section`,
+  id `models-workbuddy`, order 11, right after the built-in Models section).
+  The four groups — accounts, browser sign-in, models and billing, runtime
+  status — are collapsible.
+- **Multi-account management.** The credential file is now v3
+  `{version:3, activeId, accounts:[...]}`; up to 8 accounts, each with its own
+  token, refresh token, and account headers. Switching, renaming, and removing
+  work from the panel; signing in again adds an account instead of replacing
+  the previous one. A v2 single-account file is read as one account, so
+  upgrading never logs anybody out.
+- **Per-account isolation and pacing.** Each account derives its own
+  `x-machine-id`/`x-session-id` from a local 64-hex device salt, and outbound
+  requests are paced per account (1.2 s minimum gap, at most 2 in flight), so
+  one account never delays another and identities never mix.
+- **Credit balance.** The accounts group shows the active account's total
+  credits, a remaining/total bar per package, cycle end dates, and the nearest
+  expiry, read from WorkBuddy's billing endpoint (`get-user-resource` for
+  personal accounts, `get-enterprise-user-usage` for enterprise ones). A failed
+  read reports the error instead of showing zero.
+- New `lib/accounts.js` and `lib/credits.js`; 85 tests.
+
 ## 0.3.0 — 2026-11-10
 
 - Reads WorkBuddy's app-channel model catalog after sign-in (54 chat models on

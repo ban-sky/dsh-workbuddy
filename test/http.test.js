@@ -18,9 +18,18 @@ import { TokenStore } from '../lib/token-store.js'
  * @param {{ signedIn?: boolean }} [options] - Fake state.
  * @returns {Record<string, any>} Fake credentials.
  */
-function fakeCredentials({ signedIn = true } = {}) {
+function fakeCredentials({ signedIn = true, store } = {}) {
   return {
     reloaded: 0,
+    deviceSalt: 'a'.repeat(64),
+    activeAccountId() {
+      return signedIn ? (store?.activeId() ?? 'u-1') : ''
+    },
+    switchAccount(id) {
+      const changed = store === undefined ? id === 'u-1' : store.setActive(id)
+      if (changed) this.reloaded += 1
+      return changed
+    },
     reload() {
       this.reloaded += 1
     },
@@ -92,7 +101,7 @@ function fakeOAuth() {
 function harness(options = {}) {
   const directory = mkdtempSync(join(tmpdir(), 'dsh-workbuddy-http-'))
   const store = new TokenStore({ path: join(directory, '.workbuddy-credentials.json') })
-  const credentials = fakeCredentials(options)
+  const credentials = fakeCredentials({ ...options, store })
   const oauth = fakeOAuth()
   const catalogState = {
     source: 'fallback',
@@ -120,6 +129,7 @@ function harness(options = {}) {
     oauth,
     catalog: () => catalogState,
     refreshCatalog: async () => catalogState,
+    fetchImpl: options.fetchImpl ?? globalThis.fetch,
   })
   return { handle, store, credentials, oauth }
 }
@@ -276,4 +286,110 @@ test('probeGateway surfaces a missing credential without a request', async () =>
   assert.equal(result.connected, false)
   assert.equal(result.code, 'missing')
   assert.match(result.message, /登录/)
+})
+
+test('accounts lists every saved account and marks the active one', async () => {
+  const { handle, store } = harness()
+  store.saveAccount({ token: 'token-a', uid: 'uid-a', nickname: 'A' })
+  store.saveAccount({ token: 'token-b', uid: 'uid-b', nickname: 'B' })
+  const { status, body, text } = await post(handle, { action: 'accounts' })
+  assert.equal(status, 200)
+  assert.equal(body.value.accounts.length, 2)
+  const ids = body.value.accounts.map((account) => account.id).sort()
+  assert.deepEqual(ids, ['uid-a', 'uid-b'])
+  assert.equal(text.includes('token-a'), false)
+  assert.equal(text.includes('token-b'), false)
+})
+
+test('switchAccount changes the active account in the store', async () => {
+  const { handle, store } = harness()
+  store.saveAccount({ token: 'token-a', uid: 'uid-a' })
+  store.saveAccount({ token: 'token-b', uid: 'uid-b' })
+  assert.equal(store.activeId(), 'uid-b')
+  const { status, body } = await post(handle, { action: 'switchAccount', id: 'uid-a' })
+  assert.equal(status, 200)
+  assert.equal(body.ok, true)
+  assert.equal(store.activeId(), 'uid-a')
+  assert.equal(store.read()?.token, 'token-a')
+})
+
+test('switchAccount rejects an unknown account', async () => {
+  const { handle } = harness()
+  const { status, body } = await post(handle, { action: 'switchAccount', id: 'nope' })
+  assert.equal(status, 404)
+  assert.equal(body.error.code, 'UNKNOWN_ACCOUNT')
+})
+
+test('removeAccount removes only the requested account', async () => {
+  const { handle, store } = harness()
+  store.saveAccount({ token: 'token-a', uid: 'uid-a' })
+  store.saveAccount({ token: 'token-b', uid: 'uid-b' })
+  const { status, body } = await post(handle, { action: 'removeAccount', id: 'uid-b' })
+  assert.equal(status, 200)
+  assert.equal(body.value.accounts.length, 1)
+  assert.equal(store.get('uid-a')?.token, 'token-a')
+  assert.equal(store.get('uid-b'), undefined)
+})
+
+test('renameAccount relabels one account without touching its token', async () => {
+  const { handle, store } = harness()
+  store.saveAccount({ token: 'token-a', uid: 'uid-a', nickname: 'A' })
+  const { status, body } = await post(handle, { action: 'renameAccount', id: 'uid-a', label: '工作号' })
+  assert.equal(status, 200)
+  const renamed = body.value.accounts.find((account) => account.id === 'uid-a')
+  assert.equal(renamed.label, '工作号')
+  assert.equal(store.get('uid-a')?.token, 'token-a')
+})
+
+test('credits reports the balance without leaking the token', async () => {
+  const calls = []
+  const fetchImpl = async (url, init) => {
+    calls.push({ url, init })
+    return new Response(
+      JSON.stringify({
+        code: 0,
+        msg: 'OK',
+        data: {
+          Response: {
+            Data: {
+              TotalDosage: 903,
+              Accounts: [
+                {
+                  PackageName: '个人体验版',
+                  CapacityRemain: 500,
+                  CapacitySize: 500,
+                  CapacityType: 4,
+                  CycleEndTime: '2026-11-30 23:59:59',
+                },
+                { PackageName: '权益包', CapacityRemain: 403, CapacitySize: 1500, ExpiredTime: '2099-01-01 00:00:00' },
+              ],
+            },
+          },
+        },
+      }),
+      { status: 200, headers: { 'content-type': 'application/json' } },
+    )
+  }
+  const { handle } = harness({ fetchImpl })
+  const { status, body, text } = await post(handle, { action: 'credits' })
+  assert.equal(status, 200)
+  assert.equal(body.ok, true)
+  assert.equal(body.value.total, 903)
+  assert.equal(body.value.packages.length, 2)
+  assert.equal(text.includes('secret-token'), false)
+  assert.equal(calls[0].url, 'https://www.codebuddy.cn/v2/billing/meter/get-user-resource')
+  assert.equal(calls[0].init.headers['x-codebuddy-request'], '1')
+})
+
+test('credits reports an upstream failure instead of a zero balance', async () => {
+  const fetchImpl = async () =>
+    new Response(JSON.stringify({ code: 500, msg: 'boom' }), {
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+    })
+  const { handle } = harness({ fetchImpl })
+  const { status, body } = await post(handle, { action: 'credits' })
+  assert.equal(status, 502)
+  assert.equal(body.error.code, 'CREDITS_FAILED')
+  assert.match(body.error.message, /boom/)
 })

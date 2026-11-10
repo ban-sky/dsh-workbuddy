@@ -35,9 +35,11 @@ const manifest = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
 const sources = [
   'index.js',
   'client.js',
+  'lib/accounts.js',
   'lib/catalog.js',
   'lib/catalog-source.js',
   'lib/credentials.js',
+  'lib/credits.js',
   'lib/http.js',
   'lib/jwt.js',
   'lib/oauth.js',

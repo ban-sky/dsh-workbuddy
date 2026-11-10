@@ -25,6 +25,7 @@ import { startShim } from './lib/shim.js'
 import { createWorkBuddyHandler, ROUTE_PATH } from './lib/http.js'
 import { WorkBuddyOAuth } from './lib/oauth.js'
 import { defaultTokenStorePath, TokenStore } from './lib/token-store.js'
+import { loadDeviceSalt, RequestPacer } from './lib/accounts.js'
 
 /** Cordis services this plugin needs before it activates. */
 export const inject = ['llm']
@@ -63,23 +64,31 @@ export async function apply(ctx, config) {
     ...config,
   }
 
+  const storePath = defaultTokenStorePath()
   const tokenStore = new TokenStore({
-    path: defaultTokenStorePath(),
+    path: storePath,
     onWarning: (message) => ctx.logger.warn(`workbuddy: ${message}`),
   })
+  // One salt per installation: every account derives its own stable device
+  // identity from it, and nothing derived is ever shared between accounts.
+  const deviceSalt = loadDeviceSalt(`${storePath}.device`)
   const credentials = new WorkBuddyCredentials({
     baseURL: cfg.baseURL,
     region: cfg.region,
     savedStore: tokenStore,
+    deviceSalt,
     onWarning: (message) => ctx.logger.warn(`workbuddy: ${message}`),
   })
+  // Requests are paced per account, so parallel work on one account cannot
+  // look like a burst while another account stays untouched.
+  const pacer = new RequestPacer()
 
   const oauth = new WorkBuddyOAuth({ fetchImpl: globalThis.fetch })
 
   const status = credentials.status()
   if (!status.signedIn) {
     ctx.logger.warn(
-      'workbuddy: 尚未登录。打开 设置 → 插件 → WorkBuddy，点击「生成登录链接」完成一次性浏览器登录；模型会先注册，登录后即可使用。',
+      'workbuddy: 尚未登录。打开 设置 → 模型 · WorkBuddy，点击「生成登录链接」完成一次性浏览器登录；模型会先注册，登录后即可使用。',
     )
   }
 
@@ -107,6 +116,7 @@ export async function apply(ctx, config) {
 
   const shim = await startShim({
     credentials,
+    pacer,
     models: () => catalogState.models,
     providerId: PROVIDER_ID,
     port: cfg.port,
@@ -179,6 +189,7 @@ export async function apply(ctx, config) {
           fetch: createWorkBuddyHandler({
             credentials,
             tokenStore,
+            fetchImpl: globalThis.fetch,
             oauth,
             catalog: () => catalogState,
             refreshCatalog,
