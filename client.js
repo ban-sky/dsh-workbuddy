@@ -419,7 +419,9 @@ window.__ModuleLoader__.load({
           setCredits(await call('credits'))
         } catch (error) {
           setCredits(null)
-          setCreditsError(error.message)
+          // An older Host half has no `credits` action; stay quiet instead of
+          // showing a permanent error banner until the Host reloads.
+          setCreditsError(error?.code === 'UNKNOWN_ACTION' ? '' : error.message)
         } finally {
           setCreditsBusy(false)
         }
