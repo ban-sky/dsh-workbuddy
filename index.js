@@ -88,7 +88,7 @@ export async function apply(ctx, config) {
   const status = credentials.status()
   if (!status.signedIn) {
     ctx.logger.warn(
-      'workbuddy: 尚未登录。打开 设置 → 模型 · WorkBuddy，点击「生成登录链接」完成一次性浏览器登录；模型会先注册，登录后即可使用。',
+      'workbuddy: 尚未登录。点击侧边栏的 WorkBuddy 图标（在「更多」上方），在「浏览器登录」里生成登录链接完成一次性登录；模型会先注册，登录后即可使用。',
     )
   }
 

@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.5.0 — 2026-11-10
+
+- **The panel moved from Settings into the left sidebar.** It now registers a
+  main panel (`main` slot, key `workbuddy`) plus a rail entry
+  (`sidebar.panellist`, id `workbuddy`, order 11), so the WorkBuddy icon sits
+  right above 「更多」 in the icon rail and opens a full page instead of a
+  settings section. The `settings.section` registration is gone.
+- **The page was redesigned to match the app's own pages.** It reuses the
+  built-in page rhythm: a scrolling 960px-max content column, a 20px/28px
+  title with the gradient brand mark and a signed-in pill, 16px rounded cards
+  with 52px headers, rows separated by 0.5px `--dsw-alias-border-l4` hairlines,
+  30px buttons, and an empty-state block. Every color, border, and focus ring
+  comes from `--dsw-alias-*` / `--dsw-specific-*` theme tokens, so light and
+  dark themes both follow the app; `[data-platform=darwin]` top clearance is
+  respected like the built-in pages.
+- Credits got a real metric treatment: a 30px tabular total, per-package
+  remaining/total bars on the business accent color, and a wrapped meta line,
+  replacing the old inline list.
+- Model table is now borderless with hairline row rules, sticky column headers
+  in the tertiary label color, and chip-style reasoning levels (the default
+  level is filled with the accent color).
+- The old settings-only entry is removed, so the panel no longer appears under
+  Settings → Plugins or Settings → Models.
+
 ## 0.4.0 — 2026-11-10
 
 - **The configuration panel moved out of the Plugins page** into a standalone

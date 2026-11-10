@@ -17,7 +17,7 @@ The shim adds the WorkBuddy bearer token and account headers (`x-user-id`, `x-en
 
 The model roster is read from WorkBuddy's own app-channel catalog after sign-in (54 chat models on the CN gateway, 23 on the global gateway), with a built-in 20-model snapshot as fallback. The settings tab lists each model's reasoning levels, credit multiplier, and active or upcoming promotion window; **刷新目录** re-reads the catalog without restarting DSH.
 
-The panel is a standalone page at **Settings → Models · WorkBuddy** with four collapsible groups: accounts (with credits), browser sign-in, models and billing, and runtime status.
+The panel is a **standalone sidebar page**: click the WorkBuddy icon in the left rail (directly above 「More」) to open it. Four collapsible groups: accounts (with credits), browser sign-in, models and billing, and runtime status. It uses the app's own page rhythm (20px title, 16px rounded cards, 14px body) and reads every color, border, and focus ring from DSH theme tokens, so light and dark themes both match.
 
 ## Requirements
 
@@ -29,7 +29,7 @@ The panel is a standalone page at **Settings → Models · WorkBuddy** with four
 From a release asset (recommended):
 
 ```sh
-dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.4.0.tgz
+dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.5.0.tgz
 ```
 
 From source:
@@ -45,10 +45,10 @@ Restart DSH after installing.
 
 ## Sign in
 
-1. Open **Settings → Models · WorkBuddy**.
-2. Expand **网页登录**, choose **中国站** or **国际站**, then click **生成登录链接**.
+1. Click the **WorkBuddy** icon in the left sidebar rail (above 「More」).
+2. Expand **Browser sign-in**, choose **China (codebuddy.cn)** or **International (workbuddy.ai)**, then click **Generate login link**.
 3. Complete the login in your browser; the page polls every 2 seconds and saves that account.
-4. **测试连接** sends a one-token `ping`.
+4. **Test connection** sends a one-token `ping`.
 
 Signing in again adds a **new account** instead of overwriting the existing one.
 

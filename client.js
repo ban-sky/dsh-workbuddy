@@ -10,12 +10,13 @@ window.__ModuleLoader__.load({
     const NS = 'dsh-workbuddy'
     /** Authenticated Host route registered by the Host half. */
     const ROUTE = 'api/workbuddy'
-    /** Tab inside Settings → Plugins. */
-    const SECTION_SLOT = 'settings.section'
+    /** Main-panel key; also the id of the sidebar rail entry. */
+    const PANEL_ID = 'workbuddy'
 
     const zh = {
-      sectionLabel: '模型 · WorkBuddy',
-      title: 'WorkBuddy 接入',
+      panelLabel: 'WorkBuddy',
+      title: 'WorkBuddy',
+      subtitle: '在 DSH 中直接使用 WorkBuddy / CodeBuddy 账号的模型',
       secAccounts: '账号',
       secLogin: '浏览器登录',
       secModels: '模型与计费',
@@ -28,7 +29,7 @@ window.__ModuleLoader__.load({
       confirmRemove: '确认移除',
       accountError: '账号操作失败',
       addAccount: '添加账号',
-      accountsEmpty: '还没有已登录的账号，先完成一次浏览器登录。',
+      accountsEmpty: '还没有已登录的账号，先在「浏览器登录」里完成一次登录。',
       creditsUnit: '剩余积分',
       creditsRefresh: '刷新积分',
       creditsEmpty: '该账号暂无可显示的积分套餐。',
@@ -38,10 +39,9 @@ window.__ModuleLoader__.load({
       creditsRefreshAt: '下次重置',
       creditsExpires: '到期',
       creditsPackage: '积分套餐',
-      creditsSourcePersonal: '个人账号积分来自 WorkBuddy 计费接口。',
-      creditsSourceEnterprise: '企业账号积分来自 WorkBuddy 企业计费接口。',
-      intro: '使用浏览器登录一次，即可在 DSH 中直接调用 WorkBuddy 的模型。令牌只保存在本机。',
-      loginHint: '点击生成登录链接，在浏览器完成登录后会自动保存令牌。',
+      creditsSourcePersonal: '积分来自 WorkBuddy 个人计费接口。',
+      creditsSourceEnterprise: '积分来自 WorkBuddy 企业计费接口。',
+      loginHint: '生成登录链接后，在浏览器完成登录，令牌会自动保存。',
       loginRegion: '登录站点',
       loginRegionCn: '中国站（codebuddy.cn）',
       loginRegionGlobal: '国际站（workbuddy.ai）',
@@ -64,7 +64,7 @@ window.__ModuleLoader__.load({
       noExpiry: '未提供到期时间',
       gateway: '网关',
       models: '可用模型',
-      modelsHint: '推理等级、点数倍率与限时优惠来自 WorkBuddy 官方目录；实际扣费以服务端为准。',
+      modelsHint: '推理等级、点数倍率与限时优惠来自 WorkBuddy 官方目录，实际扣费以服务端为准。',
       modelsRefresh: '刷新目录',
       modelsEmpty: '暂无可显示模型。',
       modelsFallback: '内置快照',
@@ -73,7 +73,6 @@ window.__ModuleLoader__.load({
       reasoningDefault: '默认',
       rate: '倍率',
       promo: '优惠',
-      promoActive: '进行中',
       promoUpcoming: '即将开始',
       promoUntil: '至',
       promoDaily: '每日',
@@ -84,7 +83,7 @@ window.__ModuleLoader__.load({
       confirmClear: '再次点击确认退出',
       clearedOk: '已退出登录并清除本机令牌。',
       testedFail: '测试未通过',
-      loading: '正在读取状态…',
+      loading: '正在读取…',
       statusError: '无法读取 WorkBuddy 状态',
       clearError: '退出失败',
       noStatus: '插件 Host 尚未就绪，请稍后重试。',
@@ -94,8 +93,9 @@ window.__ModuleLoader__.load({
     }
 
     const en = {
-      sectionLabel: 'Models · WorkBuddy',
-      title: 'WorkBuddy access',
+      panelLabel: 'WorkBuddy',
+      title: 'WorkBuddy',
+      subtitle: 'Use WorkBuddy / CodeBuddy account models inside DSH',
       secAccounts: 'Accounts',
       secLogin: 'Browser sign-in',
       secModels: 'Models & billing',
@@ -118,10 +118,9 @@ window.__ModuleLoader__.load({
       creditsRefreshAt: 'resets',
       creditsExpires: 'expires',
       creditsPackage: 'Credit package',
-      creditsSourcePersonal: 'Personal credits come from the WorkBuddy billing API.',
-      creditsSourceEnterprise: 'Enterprise credits come from the WorkBuddy enterprise billing API.',
-      intro: 'Sign in once in the browser to use WorkBuddy models from DSH. The token stays on this machine.',
-      loginHint: 'Generate a login link and finish signing in. The token is saved automatically.',
+      creditsSourcePersonal: 'Credits come from the WorkBuddy personal billing API.',
+      creditsSourceEnterprise: 'Credits come from the WorkBuddy enterprise billing API.',
+      loginHint: 'Generate a login link, finish signing in, and the token is saved automatically.',
       loginRegion: 'Login site',
       loginRegionCn: 'China (codebuddy.cn)',
       loginRegionGlobal: 'International (workbuddy.ai)',
@@ -153,7 +152,6 @@ window.__ModuleLoader__.load({
       reasoningDefault: 'default',
       rate: 'Multiplier',
       promo: 'Offer',
-      promoActive: 'active',
       promoUpcoming: 'upcoming',
       promoUntil: 'until',
       promoDaily: 'daily',
@@ -164,7 +162,7 @@ window.__ModuleLoader__.load({
       confirmClear: 'Click again to confirm',
       clearedOk: 'Signed out and removed the local token.',
       testedFail: 'Test failed',
-      loading: 'Loading status…',
+      loading: 'Loading…',
       statusError: 'Could not read the WorkBuddy status',
       clearError: 'Sign-out failed',
       noStatus: 'The plugin Host is not ready yet. Try again shortly.',
@@ -236,98 +234,120 @@ window.__ModuleLoader__.load({
     }
 
     const CSS = `
-.wb-root{display:flex;flex-direction:column;gap:14px;max-width:720px;color:var(--dsw-alias-label-primary,inherit)}
-.wb-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.wb-title{margin:0;font-size:16px;font-weight:600}
-.wb-badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12px;line-height:1.5;background:var(--dsw-alias-bg-success,rgba(46,160,67,.12));color:var(--dsw-alias-label-success,#17663a)}
+.wb-page{width:100%;min-width:0;height:100%;min-height:0;display:flex;overflow:hidden;color:var(--dsw-alias-label-primary);background:var(--dsw-alias-bg-base);font-size:14px;line-height:1.6}
+.wb-scroll{flex:1;min-width:0;min-height:0;overflow:auto;scrollbar-gutter:stable;--dsh-scrollbar-width:9px;--dsh-scrollbar-thumb-border:2px}
+.wb-content{max-width:960px;margin:0 auto;padding:0 clamp(24px,4vw,48px) 48px}
+@media(max-width:640px){.wb-content{padding:0 16px 32px}}
+.wb-heading{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:16px;margin-bottom:24px;padding-top:28px}
+[data-platform=darwin] .wb-heading{padding-top:calc(28px + var(--dsh-frame-top-clearance,0px))}
+.wb-heading-main{display:flex;align-items:center;gap:12px;min-width:0}
+.wb-heading-text{min-width:0}
+.wb-heading h1{margin:0;font-size:20px;font-weight:500;line-height:28px}
+.wb-heading p{margin:2px 0 0;font-size:13px;line-height:21px;color:var(--dsw-alias-label-secondary)}
+.wb-mark{width:34px;height:34px;flex:none;border-radius:10px;box-shadow:0 2px 8px rgba(60,92,255,.22)}
+.wb-heading-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wb-badge{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 11px;border-radius:999px;font-size:12px;line-height:1;font-weight:500;background:var(--dsw-alias-bg-success,rgba(46,160,67,.12));color:var(--dsw-alias-label-success,#17663a);white-space:nowrap}
+.wb-badge::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
 .wb-badge-off{background:var(--dsw-alias-bg-warning,rgba(191,120,0,.12));color:var(--dsw-alias-label-warning,#8a5a00)}
-.wb-intro{margin:0;font-size:12px;line-height:1.7;color:var(--dsw-alias-label-secondary,inherit)}
-.wb-login{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border:1px dashed var(--dsw-alias-border-l1,rgba(0,0,0,.18));border-radius:var(--dsw-radius-md,8px)}
-.wb-login-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.wb-login-url{word-break:break-all;font-size:11px;color:var(--dsw-alias-label-secondary,inherit)}
-.wb-head{gap:10px;align-items:center}
-.wb-mark{width:28px;height:28px;flex:none;border-radius:9px;box-shadow:0 4px 12px rgba(64,96,255,.25)}
-.wb-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.wb-card-head .wb-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.wb-source{font-size:11px;color:var(--dsw-alias-label-secondary,inherit);white-space:nowrap}
-.wb-table-wrap{overflow:auto;max-height:360px;border:1px solid var(--dsw-alias-border-l1,rgba(0,0,0,.08));border-radius:10px}
-.wb-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px;min-width:640px}
-.wb-table th{position:sticky;top:0;z-index:1;text-align:left;font-weight:600;font-size:11px;letter-spacing:.02em;color:var(--dsw-alias-label-secondary,inherit);background:var(--dsw-alias-settings-card-fill,var(--dsw-alias-bg-layer1,#fff));padding:8px 10px;border-bottom:1px solid var(--dsw-alias-border-l1,rgba(0,0,0,.08))}
-.wb-table td{padding:8px 10px;border-bottom:1px solid var(--dsw-alias-border-l1,rgba(0,0,0,.05));vertical-align:middle}
-.wb-table tr:last-child td{border-bottom:0}
-.wb-model-cell{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:150px}
-.wb-model-name{font-weight:600;font-size:12px}
-.wb-chips{display:flex;gap:4px;flex-wrap:wrap}
-.wb-chip{display:inline-flex;align-items:center;padding:2px 7px;border-radius:999px;border:1px solid var(--dsw-alias-border-l2,rgba(0,0,0,.12));font-size:10px;line-height:1.5;white-space:nowrap;color:var(--dsw-alias-label-secondary,inherit)}
-.wb-chip-default{border-color:var(--dsw-alias-button-primary-fill,#4b6bff);color:var(--dsw-alias-button-primary-fill,#4b6bff);font-weight:600}
-.wb-chip-promo{border:0;color:#fff;font-weight:600}
-.wb-nowrap{white-space:nowrap}
-.wb-promo-cell{display:flex;flex-direction:column;gap:4px;min-width:140px}
-.wb-promo-text{font-size:11px;color:var(--dsw-alias-label-secondary,inherit)}
-
-.wb-login-link{display:inline-flex;align-items:center;padding:7px 12px;border-radius:var(--dsw-radius-md,8px);background:var(--dsw-alias-button-primary-fill,#24292f);color:var(--dsw-alias-button-primary-label,#fff);font-size:12px;text-decoration:none}
-.wb-select{padding:6px 8px;border:1px solid var(--dsw-alias-border-l1,rgba(0,0,0,.16));border-radius:var(--dsw-radius-md,8px);background:var(--dsw-alias-bg-layer-1,transparent);color:inherit;font:inherit;font-size:12px}
-.wb-card{display:flex;flex-direction:column;gap:12px;padding:16px;border:1px solid var(--dsw-alias-settings-card-stroke,var(--dsw-alias-border-l1,rgba(0,0,0,.1)));border-radius:var(--dsw-radius-xl,12px);background:var(--dsw-alias-settings-card-fill,transparent)}
-.wb-card-title{margin:0;font-size:13px;font-weight:600}
-.wb-grid{display:grid;grid-template-columns:minmax(96px,max-content) minmax(0,1fr);gap:8px 16px;font-size:12px;line-height:1.6}
-.wb-key{color:var(--dsw-alias-label-secondary,inherit)}
-.wb-value{min-width:0;overflow-wrap:anywhere}
-.wb-mono{font-family:var(--dsw-font-mono,ui-monospace,SFMono-Regular,Menlo,monospace);font-size:11px}
-.wb-note{margin:0;font-size:12px;line-height:1.6;color:var(--dsw-alias-label-secondary,inherit);padding:8px 10px;border-radius:var(--dsw-radius-md,8px);background:var(--dsw-alias-bg-warning,rgba(191,120,0,.08))}
-.wb-form{display:flex;flex-direction:column;gap:10px}
-.wb-field{display:flex;flex-direction:column;gap:4px}
-.wb-label{font-size:12px;color:var(--dsw-alias-label-secondary,inherit)}
-.wb-input{width:100%;box-sizing:border-box;padding:7px 10px;border:1px solid var(--dsw-alias-border-l1,rgba(0,0,0,.16));border-radius:var(--dsw-radius-md,8px);background:var(--dsw-alias-bg-layer-1,transparent);color:inherit;font:inherit;font-size:12px}
-.wb-input:focus{outline:2px solid var(--dsw-alias-focus-ring,var(--dsw-alias-button-primary-fill,#0969da));outline-offset:1px}
-.wb-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-@media(max-width:560px){.wb-row{grid-template-columns:1fr}}
-.wb-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.wb-btn{appearance:none;border:1px solid var(--dsw-alias-border-l1,rgba(0,0,0,.14));background:transparent;color:var(--dsw-alias-label-primary,inherit);border-radius:var(--dsw-radius-md,8px);padding:7px 12px;font:inherit;font-size:12px;line-height:1.4;cursor:pointer}
-.wb-btn:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.05))}
-.wb-btn:disabled{opacity:.55;cursor:default}
-.wb-btn-primary{border-color:transparent;background:var(--dsw-alias-button-primary-fill,#24292f);color:var(--dsw-alias-button-primary-label,#fff)}
-.wb-btn-primary:hover:not(:disabled){opacity:.92;background:var(--dsw-alias-button-primary-fill,#24292f)}
-.wb-btn-danger{border-color:transparent;background:var(--dsw-alias-interactive-bg-hover-danger,rgba(229,72,77,.12));color:var(--dsw-alias-label-danger,#b42318)}
-.wb-link{appearance:none;border:none;background:none;color:var(--dsw-alias-label-secondary,inherit);font:inherit;font-size:12px;cursor:pointer;padding:0;text-decoration:underline}
-.wb-banner{margin:0;padding:8px 12px;border-radius:var(--dsw-radius-md,8px);font-size:12px;line-height:1.5;word-break:break-word}
-.wb-banner-ok{background:var(--dsw-alias-bg-success,rgba(46,160,67,.12));color:var(--dsw-alias-label-success,#17663a)}
-.wb-banner-error{background:var(--dsw-alias-bg-danger,rgba(229,72,77,.12));color:var(--dsw-alias-label-danger,#b42318)}
-.wb-empty{font-size:12px;color:var(--dsw-alias-label-secondary,inherit)}
-.wb-hint{margin:0;font-size:11px;line-height:1.6;color:var(--dsw-alias-label-secondary,inherit)}
-.wb-spacer{flex:1}
-.wb-sec-toggle{appearance:none;border:0;background:none;padding:0;display:flex;align-items:center;gap:8px;cursor:pointer;color:inherit;font:inherit;text-align:left}
-.wb-chevron{display:inline-block;font-size:9px;line-height:1;color:var(--dsw-alias-label-secondary,inherit);transition:transform .15s ease}
+.wb-banner{margin:0 0 16px;padding:10px 14px;border-radius:12px;font-size:13px;line-height:21px;word-break:break-word}
+.wb-banner-ok{background:var(--dsw-alias-bg-success,rgba(46,160,67,.1));color:var(--dsw-alias-label-success,#17663a)}
+.wb-banner-error{background:var(--dsw-alias-bg-danger,rgba(229,72,77,.1));color:var(--dsw-alias-label-danger,#b42318)}
+.wb-card{border:.5px solid var(--dsw-alias-border-l3);border-radius:16px;margin-bottom:16px;overflow:hidden;background:var(--dsw-alias-bg-base)}
+.wb-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;min-height:52px;padding:8px 16px}
+.wb-card-toggle{appearance:none;border:0;background:none;padding:4px 0;display:flex;align-items:center;gap:10px;cursor:pointer;color:inherit;font:inherit;text-align:left;border-radius:8px}
+.wb-card-toggle:focus-visible{outline:2px solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:2px}
+.wb-chevron{width:12px;height:12px;flex:none;color:var(--dsw-alias-label-tertiary);transition:transform .15s ease}
 .wb-chevron-open{transform:rotate(90deg)}
-.wb-sec-body{display:flex;flex-direction:column;gap:12px}
-.wb-account-list{display:flex;flex-direction:column;gap:8px}
-.wb-account-row{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:8px 10px;border:1px solid var(--dsw-alias-border-l1,rgba(0,0,0,.1));border-radius:10px}
-.wb-account-row-active{border-color:var(--dsw-alias-button-primary-fill,#4b6bff)}
-.wb-account-main{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1 1 220px}
-.wb-account-name{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;font-weight:600}
-.wb-account-sub{font-size:11px;line-height:1.5;color:var(--dsw-alias-label-secondary,inherit);overflow-wrap:anywhere}
-.wb-account-actions{display:flex;gap:6px;flex-wrap:wrap}
-.wb-credits{display:flex;flex-direction:column;gap:8px;padding-top:10px;border-top:1px solid var(--dsw-alias-border-l1,rgba(0,0,0,.08))}
+.wb-card-title{font-size:14px;font-weight:500;line-height:22px}
+.wb-card-sub{font-size:12px;line-height:20px;color:var(--dsw-alias-label-tertiary);white-space:nowrap}
+.wb-card-body{padding:0 16px 16px;display:flex;flex-direction:column;gap:4px}
+.wb-card-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wb-row{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:48px;padding:8px 0;border-top:.5px solid var(--dsw-alias-border-l4)}
+.wb-row:first-child{border-top:0}
+.wb-row-main{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.wb-row-title{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;line-height:22px;font-weight:500}
+.wb-row-title-text{overflow-wrap:anywhere}
+.wb-row-sub{font-size:12px;line-height:20px;color:var(--dsw-alias-label-tertiary);overflow-wrap:anywhere}
+.wb-row-actions{display:flex;align-items:center;gap:6px;flex-wrap:wrap;flex:none}
+.wb-chip{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:6px;font-size:11px;line-height:1;font-weight:500;white-space:nowrap;background:var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.05));color:var(--dsw-alias-label-secondary)}
+.wb-chip-accent{background:var(--dsw-alias-state-business-primary,#4b6bff);color:#fff}
+.wb-chip-warn{background:var(--dsw-alias-bg-warning,rgba(191,120,0,.14));color:var(--dsw-alias-label-warning,#8a5a00)}
+.wb-chip-solid{color:#fff}
+.wb-btn{appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;height:30px;padding:0 12px;border-radius:9px;border:.5px solid var(--dsw-alias-border-l3);background:transparent;color:var(--dsw-alias-label-primary);font:inherit;font-size:13px;line-height:1;cursor:pointer;white-space:nowrap}
+.wb-btn:hover:not(:disabled){background:var(--dsw-alias-interactive-bg-hover)}
+.wb-btn:focus-visible{outline:2px solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:2px}
+.wb-btn:disabled{opacity:.45;cursor:default}
+.wb-btn-primary{border-color:transparent;background:var(--dsw-alias-button-primary-fill,#24292f);color:var(--dsw-alias-button-primary-label,#fff)}
+.wb-btn-primary:hover:not(:disabled){background:var(--dsw-alias-button-primary-fill,#24292f);opacity:.9}
+.wb-btn-danger{border-color:transparent;background:var(--dsw-alias-interactive-bg-hover-danger,rgba(229,72,77,.12));color:var(--dsw-alias-label-danger,#b42318)}
+.wb-btn-ghost{border-color:transparent;color:var(--dsw-alias-label-secondary)}
+.wb-credits{display:flex;flex-direction:column;gap:10px;margin-top:8px;padding-top:16px;border-top:.5px solid var(--dsw-alias-border-l3)}
+.wb-credits-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .wb-credit-total{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
-.wb-credit-number{font-size:24px;font-weight:700;line-height:1}
-.wb-credit-unit{font-size:11px;color:var(--dsw-alias-label-secondary,inherit)}
-.wb-credit-list{display:flex;flex-direction:column}
-.wb-credit-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 0;border-top:1px solid var(--dsw-alias-border-l1,rgba(0,0,0,.06))}
-.wb-credit-row:first-child{border-top:0}
-.wb-credit-row-main{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
-.wb-credit-name{font-size:12px;overflow-wrap:anywhere}
-.wb-credit-meta{font-size:10px;color:var(--dsw-alias-label-secondary,inherit)}
-.wb-credit-count{font-size:11px}
-.wb-bar{height:4px;border-radius:999px;background:var(--dsw-alias-bg-layer2,rgba(0,0,0,.08));overflow:hidden}
-.wb-bar-fill{height:100%;border-radius:999px;background:var(--dsw-alias-button-primary-fill,#4b6bff)}
+.wb-credit-number{font-size:30px;font-weight:600;line-height:1.1;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.wb-credit-unit{font-size:12px;color:var(--dsw-alias-label-tertiary)}
+.wb-credit-list{display:flex;flex-direction:column;gap:14px}
+.wb-credit-row{display:flex;flex-direction:column;gap:6px}
+.wb-credit-row-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.wb-credit-name{font-size:13px;line-height:20px;overflow-wrap:anywhere}
+.wb-credit-count{font-size:12px;color:var(--dsw-alias-label-secondary);font-variant-numeric:tabular-nums;white-space:nowrap}
+.wb-credit-meta{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;line-height:18px;color:var(--dsw-alias-label-tertiary)}
+.wb-bar{height:6px;border-radius:999px;background:var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.07));overflow:hidden}
+.wb-bar-fill{height:100%;border-radius:999px;background:var(--dsw-alias-state-business-primary,#4b6bff);transition:width .2s ease}
+.wb-hint{margin:0;font-size:12px;line-height:20px;color:var(--dsw-alias-label-tertiary)}
+.wb-empty{padding:24px 0;text-align:center;font-size:13px;color:var(--dsw-alias-label-tertiary)}
+.wb-login{display:flex;flex-direction:column;gap:10px;padding-top:4px}
+.wb-login-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.wb-label{font-size:13px;line-height:20px;color:var(--dsw-alias-label-secondary)}
+.wb-select{height:30px;padding:0 8px;border-radius:9px;border:.5px solid var(--dsw-alias-border-l3);background:var(--dsw-alias-bg-base);color:inherit;font:inherit;font-size:13px}
+.wb-select:focus-visible{outline:2px solid var(--dsw-focus-ring-color,var(--dsw-alias-state-business-primary));outline-offset:2px}
+.wb-link{display:inline-flex;align-items:center;height:30px;padding:0 12px;border-radius:9px;background:var(--dsw-alias-button-primary-fill,#24292f);color:var(--dsw-alias-button-primary-label,#fff);font-size:13px;text-decoration:none;white-space:nowrap}
+.wb-link:hover{opacity:.9}
+.wb-code{font-family:var(--dsw-font-mono,ui-monospace,SFMono-Regular,Menlo,monospace);font-size:11px;color:var(--dsw-alias-label-tertiary);word-break:break-all;min-width:0}
+.wb-mono{font-family:var(--dsw-font-mono,ui-monospace,SFMono-Regular,Menlo,monospace);font-size:12px;overflow-wrap:anywhere}
+.wb-table-wrap{overflow:auto;max-height:420px;margin:0 -16px;padding:0 16px}
+.wb-table{width:100%;border-collapse:collapse;font-size:13px;min-width:600px}
+.wb-table th{position:sticky;top:0;z-index:1;text-align:left;font-weight:500;font-size:12px;line-height:20px;color:var(--dsw-alias-label-tertiary);background:var(--dsw-alias-bg-base);padding:8px 10px 8px 0;border-bottom:.5px solid var(--dsw-alias-border-l3);white-space:nowrap}
+.wb-table td{padding:10px 10px 10px 0;border-bottom:.5px solid var(--dsw-alias-border-l4);vertical-align:middle}
+.wb-table tr:last-child td{border-bottom:0}
+.wb-model-cell{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:160px}
+.wb-model-text{display:flex;flex-direction:column;gap:1px;min-width:0}
+.wb-model-name{font-size:13px;line-height:20px}
+.wb-model-id{font-size:11px;line-height:16px;color:var(--dsw-alias-label-tertiary)}
+.wb-chips{display:flex;gap:4px;flex-wrap:wrap}
+.wb-promo-cell{display:flex;flex-direction:column;gap:4px;min-width:150px}
+.wb-promo-text{font-size:11px;line-height:18px;color:var(--dsw-alias-label-tertiary)}
+.wb-grid{display:grid;grid-template-columns:140px minmax(0,1fr);gap:10px 16px;padding:6px 0;font-size:13px;line-height:21px}
+@media(max-width:520px){.wb-grid{grid-template-columns:110px minmax(0,1fr)}}
+.wb-key{color:var(--dsw-alias-label-tertiary)}
+.wb-value{min-width:0;overflow-wrap:anywhere}
 `
 
+    /** Chevron used inside collapsible card headers. */
+    function chevron() {
+      return h(
+        'svg',
+        {
+          className: 'wb-chevron',
+          viewBox: '0 0 12 12',
+          fill: 'none',
+          stroke: 'currentColor',
+          strokeWidth: '1.6',
+          strokeLinecap: 'round',
+          strokeLinejoin: 'round',
+          'aria-hidden': 'true',
+        },
+        h('path', { d: 'M4.5 2.5 8 6l-3.5 3.5' }),
+      )
+    }
+
     /**
-     * Collapsible settings card.
+     * Collapsible card, in the app's own list-card idiom.
      *
      * @param {{ title: string, subtitle?: string, open: boolean, onToggle: Function, actions?: Array<any>, children?: Array<any> }} props - Props.
      * @returns {any} Element.
      */
-    function Section({ title, subtitle, open, onToggle, actions, children }) {
+    function Card({ title, subtitle, open, onToggle, actions, children }) {
       return h(
         'section',
         { className: 'wb-card' },
@@ -338,26 +358,26 @@ window.__ModuleLoader__.load({
             'button',
             {
               type: 'button',
-              className: 'wb-sec-toggle',
+              className: 'wb-card-toggle',
               'aria-expanded': open ? 'true' : 'false',
               onClick: onToggle,
             },
-            h('span', { className: open ? 'wb-chevron wb-chevron-open' : 'wb-chevron', 'aria-hidden': 'true' }, '▶'),
+            h('span', { className: open ? 'wb-chevron wb-chevron-open' : 'wb-chevron' }, chevron()),
             h('span', { className: 'wb-card-title' }, title),
-            subtitle ? h('span', { className: 'wb-source' }, subtitle) : null,
+            subtitle ? h('span', { className: 'wb-card-sub' }, subtitle) : null,
           ),
-          actions !== undefined && actions.length > 0 ? h('div', { className: 'wb-actions' }, ...actions) : null,
+          actions !== undefined && actions.length > 0 ? h('div', { className: 'wb-card-actions' }, ...actions) : null,
         ),
-        open ? h('div', { className: 'wb-sec-body' }, ...(children ?? [])) : null,
+        open ? h('div', { className: 'wb-card-body' }, ...(children ?? [])) : null,
       )
     }
 
     /**
-     * Settings → 模型 → WorkBuddy: accounts, credits, sign-in, and the catalog.
+     * The WorkBuddy panel: accounts, credits, sign-in, catalog, and status.
      *
      * @param {{t?: Function}} props - Slot props.
      */
-    function WorkBuddySettings({ t }) {
+    function WorkBuddyPanel({ t }) {
       const tr = typeof t === 'function' ? t : (key) => key
       const [status, setStatus] = useState(null)
       const [busy, setBusy] = useState('')
@@ -385,8 +405,8 @@ window.__ModuleLoader__.load({
             setAccounts(await call('accounts'))
           } catch (error) {
             // A Host process that predates the multi-account actions still answers
-            // "status"; fall back to showing the single saved account instead of
-            // failing the whole panel. The next Host reload picks the real actions.
+            // "status"; fall back to the single saved account instead of failing
+            // the whole panel. The next Host reload picks up the real actions.
             if (error?.code !== 'UNKNOWN_ACTION') throw error
             setAccounts(singleAccountView(next))
           }
@@ -497,6 +517,8 @@ window.__ModuleLoader__.load({
         }
       }
 
+      const removeArmedBoolean = () => removeArmed === 'active'
+
       const onClear = async () => {
         if (!removeArmedBoolean()) return
         setBusy('clear')
@@ -514,8 +536,6 @@ window.__ModuleLoader__.load({
           setRemoveArmed('')
         }
       }
-
-      const removeArmedBoolean = () => removeArmed === 'active'
 
       const onSwitch = async (id) => {
         setAccountBusy(id)
@@ -601,36 +621,28 @@ window.__ModuleLoader__.load({
           ? new Date(status.expiresAt).toLocaleString()
           : tr('noExpiry')
 
-      const hhmm = (minutes) => {
-        if (typeof minutes !== 'number' || Number.isNaN(minutes)) return ''
-        const value = ((Math.round(minutes) % 1440) + 1440) % 1440
-        return String(Math.floor(value / 60)).padStart(2, '0') + ':' + String(value % 60).padStart(2, '0')
-      }
-
       const promoSummary = (promotion) => {
-        if (promotion === undefined || promotion === null) return tr('promoNone')
-        const parts = []
-        if (promotion.status === 'active') parts.push(tr('promoActive'))
-        if (promotion.status === 'upcoming') parts.push(tr('promoUpcoming'))
+        if (promotion === undefined || promotion === null) return ''
+        // The Host already formats daily windows as "HH:MM–HH:MM" strings.
         if (Array.isArray(promotion.daily) && promotion.daily.length > 0) {
-          parts.push(
-            tr('promoDaily') +
-              ' ' +
-              promotion.daily.map((slot) => `${hhmm(slot.start)}–${hhmm(slot.end)}`).join(' / '),
-          )
-        } else if (typeof promotion.endsAt === 'number') {
-          parts.push(tr('promoUntil') + ' ' + new Date(promotion.endsAt).toLocaleDateString())
+          return tr('promoDaily') + ' ' + promotion.daily.join(' / ')
         }
-        return parts.join(' · ')
+        // Prefer the localized hover copy the official catalog ships.
+        if (typeof promotion.textZh === 'string' && promotion.textZh !== '') return promotion.textZh
+        if (typeof promotion.textEn === 'string' && promotion.textEn !== '') return promotion.textEn
+        if (typeof promotion.endsAt === 'number') {
+          return tr('promoUntil') + ' ' + new Date(promotion.endsAt).toLocaleDateString()
+        }
+        return ''
       }
 
-      const modelBadge = (label, color) =>
+      const badge = (label, color) =>
         label
           ? h(
               'span',
               {
-                className: 'wb-chip wb-chip-promo',
-                style: color ? { background: color, borderColor: color, color: '#fff' } : undefined,
+                className: color ? 'wb-chip wb-chip-solid' : 'wb-chip',
+                style: color ? { background: color } : undefined,
               },
               label,
             )
@@ -642,9 +654,28 @@ window.__ModuleLoader__.load({
           { key: model.id },
           h(
             'td',
-            { className: 'wb-model-cell' },
-            h('span', { className: 'wb-model-name' }, model.name || model.id),
-            model.tier ? modelBadge(model.tier.label, model.tier.color) : null,
+            null,
+            h(
+              'div',
+              { className: 'wb-model-cell' },
+              h(
+                'div',
+                { className: 'wb-model-text' },
+                h('span', { className: 'wb-model-name' }, model.name || model.id),
+                model.name && model.name !== model.id ? h('span', { className: 'wb-model-id wb-mono' }, model.id) : null,
+              ),
+              model.tier
+                ? h(
+                    'span',
+                    {
+                      className: model.tier.color ? 'wb-chip wb-chip-solid' : 'wb-chip',
+                      style: model.tier.color ? { background: model.tier.color } : undefined,
+                      title: model.tier.text,
+                    },
+                    model.tier.label,
+                  )
+                : null,
+            ),
           ),
           h(
             'td',
@@ -657,8 +688,7 @@ window.__ModuleLoader__.load({
                   'span',
                   {
                     key: effort,
-                    className:
-                      effort === model.defaultEffort ? 'wb-chip wb-chip-default' : 'wb-chip',
+                    className: effort === model.defaultEffort ? 'wb-chip wb-chip-accent' : 'wb-chip',
                     title: effort === model.defaultEffort ? tr('reasoningDefault') : undefined,
                   },
                   effort,
@@ -666,56 +696,63 @@ window.__ModuleLoader__.load({
               ),
             ),
           ),
-          h('td', { className: 'wb-mono wb-nowrap' }, model.creditsText || tr('promoNone')),
+          h('td', { className: 'wb-mono' }, model.creditsText || tr('promoNone')),
           h(
             'td',
-            { className: 'wb-promo-cell' },
-            model.promotion ? modelBadge(model.promotion.label, model.promotion.color) : null,
-            model.promotion
-              ? h('span', { className: 'wb-promo-text' }, promoSummary(model.promotion))
-              : null,
+            null,
+            h(
+              'div',
+              { className: 'wb-promo-cell' },
+              model.promotion === undefined || model.promotion === null
+                ? h('span', { className: 'wb-promo-text' }, tr('promoNone'))
+                : h(
+                    'div',
+                    { className: 'wb-chips' },
+                    badge(model.promotion.label, model.promotion.color),
+                    model.promotion.status === 'upcoming'
+                      ? h('span', { className: 'wb-chip wb-chip-warn' }, tr('promoUpcoming'))
+                      : null,
+                  ),
+              model.promotion !== undefined && model.promotion !== null && promoSummary(model.promotion) !== ''
+                ? h('span', { className: 'wb-promo-text' }, promoSummary(model.promotion))
+                : null,
+            ),
           ),
         ),
       )
 
-      const row = (key, value, mono) =>
-        h(
-          'div',
-          { className: 'wb-grid', style: { display: 'contents' } },
-          h('span', { className: 'wb-key' }, key),
-          h('span', { className: mono === true ? 'wb-value wb-mono' : 'wb-value' }, value),
-        )
-
       const accountRows = (accounts?.accounts ?? []).map((account) => {
         const title = account.label || account.nickname || account.uid || account.id
-        const detail = [account.nickname, account.uid, account.domain].filter((part) => typeof part === 'string' && part !== '')
+        const detail = [account.nickname, account.uid, account.domain].filter(
+          (part) => typeof part === 'string' && part !== '',
+        )
         return h(
           'div',
-          { key: account.id, className: account.active ? 'wb-account-row wb-account-row-active' : 'wb-account-row' },
+          { key: account.id, className: 'wb-row' },
           h(
             'div',
-            { className: 'wb-account-main' },
+            { className: 'wb-row-main' },
             h(
               'span',
-              { className: 'wb-account-name' },
-              title,
-              account.active ? h('span', { className: 'wb-chip wb-chip-default' }, tr('active')) : null,
+              { className: 'wb-row-title' },
+              h('span', { className: 'wb-row-title-text' }, title),
+              account.active ? h('span', { className: 'wb-chip wb-chip-accent' }, tr('active')) : null,
             ),
-            detail.length > 0 ? h('span', { className: 'wb-account-sub' }, detail.join(' · ')) : null,
+            detail.length > 0 ? h('span', { className: 'wb-row-sub' }, detail.join(' · ')) : null,
             typeof account.expiresAt === 'number' && account.expiresAt > 0
-              ? h('span', { className: 'wb-account-sub' }, tr('expiry') + ' ' + new Date(account.expiresAt).toLocaleString())
+              ? h('span', { className: 'wb-row-sub' }, tr('expiry') + ' ' + new Date(account.expiresAt).toLocaleString())
               : null,
           ),
           h(
             'div',
-            { className: 'wb-account-actions' },
+            { className: 'wb-row-actions' },
             account.active
               ? null
               : h(
                   'button',
                   {
                     type: 'button',
-                    className: 'wb-btn wb-btn-primary',
+                    className: 'wb-btn',
                     disabled: accountBusy !== '',
                     onClick: () => {
                       void onSwitch(account.id)
@@ -727,7 +764,7 @@ window.__ModuleLoader__.load({
               'button',
               {
                 type: 'button',
-                className: 'wb-btn',
+                className: 'wb-btn wb-btn-ghost',
                 disabled: accountBusy !== '',
                 onClick: () => {
                   void onRename(account)
@@ -739,7 +776,7 @@ window.__ModuleLoader__.load({
               'button',
               {
                 type: 'button',
-                className: 'wb-btn wb-btn-danger',
+                className: 'wb-btn wb-btn-ghost',
                 disabled: accountBusy !== '',
                 onClick: () => {
                   void onRemove(account.id)
@@ -766,16 +803,18 @@ window.__ModuleLoader__.load({
           { key: String(index), className: 'wb-credit-row' },
           h(
             'div',
-            { className: 'wb-credit-row-main' },
+            { className: 'wb-credit-row-head' },
             h('span', { className: 'wb-credit-name' }, entry.name || tr('creditsPackage')),
-            h('div', { className: 'wb-bar' }, h('div', { className: 'wb-bar-fill', style: { width: String(Math.round(ratio * 100)) + '%' } })),
-            meta.length > 0 ? h('span', { className: 'wb-credit-meta' }, meta.join(' · ')) : null,
+            h('span', { className: 'wb-credit-count' }, String(entry.remain) + ' / ' + String(entry.size)),
           ),
           h(
-            'span',
-            { className: 'wb-credit-count wb-mono wb-nowrap' },
-            String(entry.remain) + ' / ' + String(entry.size),
+            'div',
+            { className: 'wb-bar' },
+            h('div', { className: 'wb-bar-fill', style: { width: String(Math.round(ratio * 100)) + '%' } }),
           ),
+          meta.length > 0
+            ? h('div', { className: 'wb-credit-meta' }, ...meta.map((part) => h('span', { key: part }, part)))
+            : null,
         )
       })
 
@@ -786,21 +825,21 @@ window.__ModuleLoader__.load({
             { className: 'wb-credits' },
             h(
               'div',
-              { className: 'wb-card-head' },
+              { className: 'wb-credits-head' },
               h(
                 'div',
                 { className: 'wb-credit-total' },
                 h('span', { className: 'wb-credit-number' }, credits === null ? '—' : String(credits.total)),
                 h('span', { className: 'wb-credit-unit' }, tr('creditsUnit')),
                 credits !== null && credits.expiringSoon === true
-                  ? h('span', { className: 'wb-chip wb-chip-promo', style: { background: '#b45309' } }, tr('creditsExpiring'))
+                  ? h('span', { className: 'wb-chip wb-chip-warn' }, tr('creditsExpiring'))
                   : null,
               ),
               h(
                 'button',
                 {
                   type: 'button',
-                  className: 'wb-btn',
+                  className: 'wb-btn wb-btn-ghost',
                   disabled: creditsBusy,
                   onClick: () => {
                     void loadCredits()
@@ -810,14 +849,24 @@ window.__ModuleLoader__.load({
               ),
             ),
             creditsError !== ''
-              ? h('p', { className: 'wb-banner wb-banner-error' }, tr('creditsError') + ': ' + creditsError)
+              ? h(
+                  'p',
+                  { className: 'wb-banner wb-banner-error', style: { margin: '4px 0 0' } },
+                  tr('creditsError') + ': ' + creditsError,
+                )
               : null,
             creditsError === '' && credits !== null && credits.packages.length === 0
               ? h('p', { className: 'wb-empty' }, tr('creditsEmpty'))
               : null,
-            credits !== null && credits.packages.length > 0 ? h('div', { className: 'wb-credit-list' }, ...creditPackages) : null,
+            credits !== null && credits.packages.length > 0
+              ? h('div', { className: 'wb-credit-list' }, ...creditPackages)
+              : null,
             credits !== null
-              ? h('p', { className: 'wb-hint' }, credits.source === 'enterprise' ? tr('creditsSourceEnterprise') : tr('creditsSourcePersonal'))
+              ? h(
+                  'p',
+                  { className: 'wb-hint' },
+                  credits.source === 'enterprise' ? tr('creditsSourceEnterprise') : tr('creditsSourcePersonal'),
+                )
               : null,
           )
 
@@ -826,10 +875,10 @@ window.__ModuleLoader__.load({
           ? h('p', { className: 'wb-empty' }, tr('loading'))
           : accounts.accounts.length === 0
             ? h('p', { className: 'wb-empty' }, tr('accountsEmpty'))
-            : h('div', { className: 'wb-account-list' }, ...accountRows),
+            : h('div', null, ...accountRows),
         h(
           'div',
-          { className: 'wb-actions' },
+          { className: 'wb-card-actions', style: { marginTop: '8px' } },
           h(
             'button',
             {
@@ -893,10 +942,6 @@ window.__ModuleLoader__.load({
               h('option', { value: 'cn' }, tr('loginRegionCn')),
               h('option', { value: 'global' }, tr('loginRegionGlobal')),
             ),
-          ),
-          h(
-            'div',
-            { className: 'wb-actions' },
             h(
               'button',
               {
@@ -914,7 +959,7 @@ window.__ModuleLoader__.load({
                   'button',
                   {
                     type: 'button',
-                    className: 'wb-btn',
+                    className: 'wb-btn wb-btn-ghost',
                     onClick: () => {
                       void onCancelLogin()
                     },
@@ -930,14 +975,14 @@ window.__ModuleLoader__.load({
                 h(
                   'a',
                   {
-                    className: 'wb-login-link',
+                    className: 'wb-link',
                     href: login.verificationUri,
                     target: '_blank',
                     rel: 'noreferrer noopener',
                   },
                   tr('loginOpen'),
                 ),
-                h('code', { className: 'wb-login-url' }, login.verificationUri),
+                h('code', { className: 'wb-code' }, login.verificationUri),
               )
             : null,
           login !== null && login.status === 'pending' ? h('p', { className: 'wb-hint' }, tr('loginWaiting')) : null,
@@ -975,25 +1020,30 @@ window.__ModuleLoader__.load({
             ),
       ]
 
+      const statusPairs = [
+        [tr('state'), status === null ? '' : status.signedIn ? tr('signedIn') : tr('notSignedIn'), false],
+        [tr('source'), status === null ? '' : status.saved === true ? tr('sourceSaved') : tr('sourceNone'), false],
+        [tr('account'), status === null || status.uid === '' ? null : status.uid, true],
+        [tr('expiry'), expiry, false],
+        [tr('gateway'), status === null ? '' : status.baseURL, true],
+        [tr('models'), status === null ? '' : String(status.modelCount ?? 0), false],
+      ].filter((pair) => pair[1] !== null)
+
       const statusBody = [
         status === null
           ? h('p', { className: 'wb-empty' }, busy === 'status' ? tr('loading') : tr('noStatus'))
           : h(
               'div',
               { className: 'wb-grid' },
-              ...[
-                row(tr('state'), status.signedIn ? tr('signedIn') : tr('notSignedIn')),
-                row(tr('source'), status.saved === true ? tr('sourceSaved') : tr('sourceNone')),
-                status.uid !== '' ? row(tr('account'), status.uid, true) : null,
-                row(tr('expiry'), expiry),
-                row(tr('gateway'), status.baseURL, true),
-                row(tr('models'), String(status.modelCount ?? 0)),
-              ].filter(Boolean),
+              ...statusPairs.flatMap(([key, value, mono]) => [
+                h('span', { key: 'k:' + key, className: 'wb-key' }, key),
+                h('span', { key: 'v:' + key, className: mono === true ? 'wb-value wb-mono' : 'wb-value' }, value),
+              ]),
             ),
         h('p', { className: 'wb-hint' }, tr('storageNote')),
         h(
           'div',
-          { className: 'wb-actions' },
+          { className: 'wb-card-actions', style: { marginTop: '8px' } },
           h(
             'button',
             {
@@ -1010,78 +1060,163 @@ window.__ModuleLoader__.load({
       ]
 
       return h(
-        'div',
-        { className: 'wb-root' },
+        'section',
+        { className: 'wb-page', 'aria-label': tr('title') },
         h(
           'div',
-          { className: 'wb-head' },
+          { className: 'wb-scroll' },
           h(
-            'svg',
-            { className: 'wb-mark', viewBox: '0 0 32 32', role: 'img', 'aria-hidden': 'true' },
-            h('defs', null,
-              h('linearGradient', { id: 'wb-mark-gradient', x1: '0', y1: '0', x2: '1', y2: '1' },
-                h('stop', { offset: '0', stopColor: '#3b82f6' }),
-                h('stop', { offset: '0.55', stopColor: '#6366f1' }),
-                h('stop', { offset: '1', stopColor: '#8b5cf6' }),
+            'div',
+            { className: 'wb-content' },
+            h(
+              'header',
+              { className: 'wb-heading' },
+              h(
+                'div',
+                { className: 'wb-heading-main' },
+                h(
+                  'svg',
+                  { className: 'wb-mark', viewBox: '0 0 32 32', role: 'img', 'aria-hidden': 'true' },
+                  h(
+                    'defs',
+                    null,
+                    h(
+                      'linearGradient',
+                      { id: 'wb-page-gradient', x1: '0', y1: '0', x2: '1', y2: '1' },
+                      h('stop', { offset: '0', stopColor: '#3b82f6' }),
+                      h('stop', { offset: '0.55', stopColor: '#6366f1' }),
+                      h('stop', { offset: '1', stopColor: '#8b5cf6' }),
+                    ),
+                  ),
+                  h('rect', { width: '32', height: '32', rx: '9', fill: 'url(#wb-page-gradient)' }),
+                  h('path', {
+                    d: 'M8 11l3.4 10 3.1-7 3.1 7L21 11',
+                    fill: 'none',
+                    stroke: '#fff',
+                    strokeWidth: '2.2',
+                    strokeLinecap: 'round',
+                    strokeLinejoin: 'round',
+                  }),
+                  h('circle', { cx: '23.5', cy: '9.5', r: '2.2', fill: '#fff', opacity: '0.9' }),
+                ),
+                h(
+                  'div',
+                  { className: 'wb-heading-text' },
+                  h('h1', null, tr('title')),
+                  h('p', null, tr('subtitle')),
+                ),
+              ),
+              h(
+                'div',
+                { className: 'wb-heading-actions' },
+                status !== null
+                  ? h(
+                      'span',
+                      { className: status.signedIn ? 'wb-badge' : 'wb-badge wb-badge-off' },
+                      status.signedIn ? tr('signedIn') : tr('notSignedIn'),
+                    )
+                  : null,
+                h(
+                  'button',
+                  {
+                    type: 'button',
+                    className: 'wb-btn',
+                    disabled: busy !== '',
+                    onClick: () => {
+                      void refresh()
+                      void loadCatalog()
+                      void loadCredits()
+                    },
+                  },
+                  tr('refresh'),
+                ),
               ),
             ),
-            h('rect', { width: '32', height: '32', rx: '9', fill: 'url(#wb-mark-gradient)' }),
-            h('path', { d: 'M8 11l3.4 10 3.1-7 3.1 7L21 11', fill: 'none', stroke: '#fff', 'stroke-width': '2.2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }),
-            h('circle', { cx: '23.5', cy: '9.5', r: '2.2', fill: '#fff', opacity: '0.9' }),
+            message !== null
+              ? h(
+                  'p',
+                  { className: 'wb-banner ' + (message.kind === 'ok' ? 'wb-banner-ok' : 'wb-banner-error') },
+                  message.text,
+                )
+              : null,
+            Card({
+              title: tr('secAccounts'),
+              subtitle: accounts !== null ? String(accounts.accounts.length) : undefined,
+              open: open.accounts,
+              onToggle: () => toggle('accounts'),
+              children: accountsBody,
+            }),
+            Card({
+              title: tr('secLogin'),
+              open: open.login,
+              onToggle: () => toggle('login'),
+              children: loginBody,
+            }),
+            Card({
+              title: tr('secModels'),
+              subtitle:
+                catalog !== null ? (catalog.source === 'remote' ? tr('modelsRemote') : tr('modelsFallback')) : undefined,
+              open: open.models,
+              onToggle: () => toggle('models'),
+              actions: [
+                h(
+                  'button',
+                  {
+                    type: 'button',
+                    className: 'wb-btn wb-btn-ghost',
+                    disabled: catalogBusy,
+                    onClick: () => {
+                      void loadCatalog('refreshModels')
+                    },
+                  },
+                  catalogBusy ? tr('loading') : tr('modelsRefresh'),
+                ),
+              ],
+              children: modelsBody,
+            }),
+            Card({
+              title: tr('secStatus'),
+              open: open.status,
+              onToggle: () => toggle('status'),
+              children: statusBody,
+            }),
           ),
-          h('h2', { className: 'wb-title' }, tr('title')),
-          status !== null
-            ? h(
-                'span',
-                { className: status.signedIn ? 'wb-badge' : 'wb-badge wb-badge-off' },
-                status.signedIn ? tr('signedIn') : tr('notSignedIn'),
-              )
-            : null,
         ),
-        h('p', { className: 'wb-intro' }, tr('intro')),
-        message !== null
-          ? h('p', { className: 'wb-banner ' + (message.kind === 'ok' ? 'wb-banner-ok' : 'wb-banner-error') }, message.text)
-          : null,
-        Section({
-          title: tr('secAccounts'),
-          subtitle: accounts !== null ? String(accounts.accounts.length) : undefined,
-          open: open.accounts,
-          onToggle: () => toggle('accounts'),
-          children: accountsBody,
+      )
+    }
+
+    /**
+     * Sidebar rail glyph: the gradient W mark, sized by the rail.
+     *
+     * @param {{size?: number}} props - Rail props.
+     * @returns {any} Element.
+     */
+    function WorkBuddyGlyph({ size }) {
+      const px = typeof size === 'number' && size > 0 ? size : 18
+      return h(
+        'svg',
+        { width: px, height: px, viewBox: '0 0 32 32', role: 'img', 'aria-hidden': 'true' },
+        h(
+          'defs',
+          null,
+          h(
+            'linearGradient',
+            { id: 'wb-rail-gradient', x1: '0', y1: '0', x2: '1', y2: '1' },
+            h('stop', { offset: '0', stopColor: '#3b82f6' }),
+            h('stop', { offset: '0.55', stopColor: '#6366f1' }),
+            h('stop', { offset: '1', stopColor: '#8b5cf6' }),
+          ),
+        ),
+        h('rect', { width: '32', height: '32', rx: '9', fill: 'url(#wb-rail-gradient)' }),
+        h('path', {
+          d: 'M8 11l3.4 10 3.1-7 3.1 7L21 11',
+          fill: 'none',
+          stroke: '#fff',
+          strokeWidth: '3',
+          strokeLinecap: 'round',
+          strokeLinejoin: 'round',
         }),
-        Section({
-          title: tr('secLogin'),
-          open: open.login,
-          onToggle: () => toggle('login'),
-          children: loginBody,
-        }),
-        Section({
-          title: tr('secModels'),
-          subtitle: catalog !== null ? (catalog.source === 'remote' ? tr('modelsRemote') : tr('modelsFallback')) : undefined,
-          open: open.models,
-          onToggle: () => toggle('models'),
-          actions: [
-            h(
-              'button',
-              {
-                type: 'button',
-                className: 'wb-btn',
-                disabled: catalogBusy,
-                onClick: () => {
-                  void loadCatalog('refreshModels')
-                },
-              },
-              catalogBusy ? tr('loading') : tr('modelsRefresh'),
-            ),
-          ],
-          children: modelsBody,
-        }),
-        Section({
-          title: tr('secStatus'),
-          open: open.status,
-          onToggle: () => toggle('status'),
-          children: statusBody,
-        }),
+        h('circle', { cx: '23.5', cy: '9.5', r: '2.4', fill: '#fff', opacity: '0.9' }),
       )
     }
 
@@ -1103,16 +1238,27 @@ window.__ModuleLoader__.load({
 
       const boundT = ctx.locale.bind(NS)
 
-      ctx.slots.inject(SECTION_SLOT, () =>
+      ctx.slots.inject('main', () =>
         ctx.slots.register(
           {
-            name: SECTION_SLOT,
-            id: 'models-workbuddy',
-            order: 11,
-            label: () => boundT('sectionLabel'),
+            name: 'main',
+            key: PANEL_ID,
             locale: NS,
           },
-          WorkBuddySettings,
+          WorkBuddyPanel,
+        ),
+      )
+
+      ctx.slots.inject('sidebar.panellist', () =>
+        ctx.slots.register(
+          {
+            name: 'sidebar.panellist',
+            id: PANEL_ID,
+            order: 11,
+            label: () => boundT('panelLabel'),
+            locale: NS,
+          },
+          WorkBuddyGlyph,
         ),
       )
     }
