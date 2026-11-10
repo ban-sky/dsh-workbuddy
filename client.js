@@ -44,6 +44,22 @@ window.__ModuleLoader__.load({
       noExpiry: '未提供到期时间',
       gateway: '网关',
       models: '可用模型',
+      modelsTitle: '模型与计费',
+      modelsHint: '推理等级、点数倍率与限时优惠来自 WorkBuddy 官方目录；实际扣费以服务端为准。',
+      modelsRefresh: '刷新目录',
+      modelsEmpty: '暂无可显示模型。',
+      modelsFallback: '内置快照',
+      modelsRemote: '官方目录',
+      reasoning: '推理等级',
+      reasoningDefault: '默认',
+      reasoningOff: '可关闭思考',
+      rate: '倍率',
+      promo: '优惠',
+      promoActive: '进行中',
+      promoUpcoming: '即将开始',
+      promoUntil: '至',
+      promoDaily: '每日',
+      promoNone: '—',
       test: '测试连接',
       testing: '正在测试…',
       clear: '退出登录',
@@ -92,6 +108,22 @@ window.__ModuleLoader__.load({
       noExpiry: 'No expiry recorded',
       gateway: 'Gateway',
       models: 'Models',
+      modelsTitle: 'Models & billing',
+      modelsHint: 'Reasoning levels, credit multipliers, and limited-time offers come from the WorkBuddy catalog; the server remains authoritative.',
+      modelsRefresh: 'Refresh catalog',
+      modelsEmpty: 'No models to show.',
+      modelsFallback: 'Built-in snapshot',
+      modelsRemote: 'Official catalog',
+      reasoning: 'Reasoning',
+      reasoningDefault: 'default',
+      reasoningOff: 'thinking can be off',
+      rate: 'Multiplier',
+      promo: 'Offer',
+      promoActive: 'active',
+      promoUpcoming: 'upcoming',
+      promoUntil: 'until',
+      promoDaily: 'daily',
+      promoNone: '—',
       test: 'Test connection',
       testing: 'Testing…',
       clear: 'Sign out',
@@ -151,6 +183,26 @@ window.__ModuleLoader__.load({
 .wb-login{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border:1px dashed var(--dsw-alias-border-l1,rgba(0,0,0,.18));border-radius:var(--dsw-radius-md,8px)}
 .wb-login-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .wb-login-url{word-break:break-all;font-size:11px;color:var(--dsw-alias-label-secondary,inherit)}
+.wb-head{gap:10px;align-items:center}
+.wb-mark{width:28px;height:28px;flex:none;border-radius:9px;box-shadow:0 4px 12px rgba(64,96,255,.25)}
+.wb-card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.wb-card-head .wb-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wb-source{font-size:11px;color:var(--dsw-alias-label-secondary,inherit);white-space:nowrap}
+.wb-table-wrap{overflow:auto;max-height:360px;border:1px solid var(--dsw-alias-border-l1,rgba(0,0,0,.08));border-radius:10px}
+.wb-table{width:100%;border-collapse:separate;border-spacing:0;font-size:12px;min-width:640px}
+.wb-table th{position:sticky;top:0;z-index:1;text-align:left;font-weight:600;font-size:11px;letter-spacing:.02em;color:var(--dsw-alias-label-secondary,inherit);background:var(--dsw-alias-settings-card-fill,var(--dsw-alias-bg-layer1,#fff));padding:8px 10px;border-bottom:1px solid var(--dsw-alias-border-l1,rgba(0,0,0,.08))}
+.wb-table td{padding:8px 10px;border-bottom:1px solid var(--dsw-alias-border-l1,rgba(0,0,0,.05));vertical-align:middle}
+.wb-table tr:last-child td{border-bottom:0}
+.wb-model-cell{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:150px}
+.wb-model-name{font-weight:600;font-size:12px}
+.wb-chips{display:flex;gap:4px;flex-wrap:wrap}
+.wb-chip{display:inline-flex;align-items:center;padding:2px 7px;border-radius:999px;border:1px solid var(--dsw-alias-border-l2,rgba(0,0,0,.12));font-size:10px;line-height:1.5;white-space:nowrap;color:var(--dsw-alias-label-secondary,inherit)}
+.wb-chip-default{border-color:var(--dsw-alias-button-primary-fill,#4b6bff);color:var(--dsw-alias-button-primary-fill,#4b6bff);font-weight:600}
+.wb-chip-promo{border:0;color:#fff;font-weight:600}
+.wb-nowrap{white-space:nowrap}
+.wb-promo-cell{display:flex;flex-direction:column;gap:4px;min-width:140px}
+.wb-promo-text{font-size:11px;color:var(--dsw-alias-label-secondary,inherit)}
+
 .wb-login-link{display:inline-flex;align-items:center;padding:7px 12px;border-radius:var(--dsw-radius-md,8px);background:var(--dsw-alias-button-primary-fill,#24292f);color:var(--dsw-alias-button-primary-label,#fff);font-size:12px;text-decoration:none}
 .wb-select{padding:6px 8px;border:1px solid var(--dsw-alias-border-l1,rgba(0,0,0,.16));border-radius:var(--dsw-radius-md,8px);background:var(--dsw-alias-bg-layer-1,transparent);color:inherit;font:inherit;font-size:12px}
 .wb-card{display:flex;flex-direction:column;gap:12px;padding:16px;border:1px solid var(--dsw-alias-settings-card-stroke,var(--dsw-alias-border-l1,rgba(0,0,0,.1)));border-radius:var(--dsw-radius-xl,12px);background:var(--dsw-alias-settings-card-fill,transparent)}
@@ -196,6 +248,8 @@ window.__ModuleLoader__.load({
       const [clearArmed, setClearArmed] = useState(false)
       const [login, setLogin] = useState(null)
       const [loginRegion, setLoginRegion] = useState('cn')
+      const [catalog, setCatalog] = useState(null)
+      const [catalogBusy, setCatalogBusy] = useState(false)
 
       const refresh = useCallback(async () => {
         setBusy('status')
@@ -209,9 +263,24 @@ window.__ModuleLoader__.load({
         }
       }, [tr])
 
+      const loadCatalog = useCallback(
+        async (action = 'models') => {
+          setCatalogBusy(true)
+          try {
+            setCatalog(await call(action))
+          } catch (error) {
+            setMessage({ kind: 'error', text: `${tr('statusError')}: ${error.message}` })
+          } finally {
+            setCatalogBusy(false)
+          }
+        },
+        [tr],
+      )
+
       useEffect(() => {
         refresh()
-      }, [refresh])
+        void loadCatalog()
+      }, [refresh, loadCatalog])
 
       useEffect(() => {
         if (login === null || login.status !== 'pending') return undefined
@@ -224,6 +293,7 @@ window.__ModuleLoader__.load({
             if (value.status === 'done') {
               setStatus(value.state ?? (await call('status')))
               setLogin({ ...login, status: 'done' })
+              void loadCatalog()
               setMessage({ kind: 'ok', text: tr('loginDone') })
               return
             }
@@ -315,6 +385,83 @@ window.__ModuleLoader__.load({
           ? new Date(status.expiresAt).toLocaleString()
           : tr('noExpiry')
 
+      const hhmm = (minutes) => {
+        if (typeof minutes !== 'number' || Number.isNaN(minutes)) return ''
+        const value = ((Math.round(minutes) % 1440) + 1440) % 1440
+        return String(Math.floor(value / 60)).padStart(2, '0') + ':' + String(value % 60).padStart(2, '0')
+      }
+
+      const promoSummary = (promotion) => {
+        if (promotion === undefined || promotion === null) return tr('promoNone')
+        const parts = []
+        if (promotion.status === 'active') parts.push(tr('promoActive'))
+        if (promotion.status === 'upcoming') parts.push(tr('promoUpcoming'))
+        if (Array.isArray(promotion.daily) && promotion.daily.length > 0) {
+          parts.push(
+            tr('promoDaily') +
+              ' ' +
+              promotion.daily.map((slot) => `${hhmm(slot.start)}–${hhmm(slot.end)}`).join(' / '),
+          )
+        } else if (typeof promotion.endsAt === 'number') {
+          parts.push(tr('promoUntil') + ' ' + new Date(promotion.endsAt).toLocaleDateString())
+        }
+        return parts.join(' · ')
+      }
+
+      const modelBadge = (label, color) =>
+        label
+          ? h(
+              'span',
+              {
+                className: 'wb-chip wb-chip-promo',
+                style: color ? { background: color, borderColor: color, color: '#fff' } : undefined,
+              },
+              label,
+            )
+          : null
+
+      const catalogRows = (catalog?.models ?? []).map((model) =>
+        h(
+          'tr',
+          { key: model.id },
+          h(
+            'td',
+            { className: 'wb-model-cell' },
+            h('span', { className: 'wb-model-name' }, model.name || model.id),
+            model.tier ? modelBadge(model.tier.label, model.tier.color) : null,
+          ),
+          h(
+            'td',
+            null,
+            h(
+              'div',
+              { className: 'wb-chips' },
+              ...(model.efforts ?? []).map((effort) =>
+                h(
+                  'span',
+                  {
+                    key: effort,
+                    className:
+                      effort === model.defaultEffort ? 'wb-chip wb-chip-default' : 'wb-chip',
+                    title: effort === model.defaultEffort ? tr('reasoningDefault') : undefined,
+                  },
+                  effort,
+                ),
+              ),
+            ),
+          ),
+          h('td', { className: 'wb-mono wb-nowrap' }, model.creditsText || tr('promoNone')),
+          h(
+            'td',
+            { className: 'wb-promo-cell' },
+            model.promotion ? modelBadge(model.promotion.label, model.promotion.color) : null,
+            model.promotion
+              ? h('span', { className: 'wb-promo-text' }, promoSummary(model.promotion))
+              : null,
+          ),
+        ),
+      )
+
       const row = (key, value, mono) =>
         h(
           'div',
@@ -329,6 +476,25 @@ window.__ModuleLoader__.load({
         h(
           'div',
           { className: 'wb-head' },
+          h(
+            'svg',
+            {
+              className: 'wb-mark',
+              viewBox: '0 0 32 32',
+              role: 'img',
+              'aria-hidden': 'true',
+            },
+            h('defs', null,
+              h('linearGradient', { id: 'wb-mark-gradient', x1: '0', y1: '0', x2: '1', y2: '1' },
+                h('stop', { offset: '0', stopColor: '#3b82f6' }),
+                h('stop', { offset: '0.55', stopColor: '#6366f1' }),
+                h('stop', { offset: '1', stopColor: '#8b5cf6' }),
+              ),
+            ),
+            h('rect', { width: '32', height: '32', rx: '9', fill: 'url(#wb-mark-gradient)' }),
+            h('path', { d: 'M8 11l3.4 10 3.1-7 3.1 7L21 11', fill: 'none', stroke: '#fff', 'stroke-width': '2.2', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }),
+            h('circle', { cx: '23.5', cy: '9.5', r: '2.2', fill: '#fff', opacity: '0.9' }),
+          ),
           h('h2', { className: 'wb-title' }, tr('title')),
           status !== null
             ? h(
@@ -482,6 +648,64 @@ window.__ModuleLoader__.load({
               ? h('p', { className: 'wb-hint' }, tr('loginExpired'))
               : null,
           ),
+        ),
+        h(
+          'section',
+          { className: 'wb-card' },
+          h(
+            'div',
+            { className: 'wb-card-head' },
+            h('h3', { className: 'wb-card-title' }, tr('modelsTitle')),
+            h(
+              'div',
+              { className: 'wb-actions' },
+              catalog !== null
+                ? h(
+                    'span',
+                    { className: 'wb-source' },
+                    catalog.source === 'remote' ? tr('modelsRemote') : tr('modelsFallback'),
+                  )
+                : null,
+              h(
+                'button',
+                {
+                  type: 'button',
+                  className: 'wb-btn',
+                  disabled: catalogBusy,
+                  onClick: () => {
+                    void loadCatalog('refreshModels')
+                  },
+                },
+                catalogBusy ? tr('loading') : tr('modelsRefresh'),
+              ),
+            ),
+          ),
+          h('p', { className: 'wb-hint' }, tr('modelsHint')),
+          catalog === null
+            ? h('p', { className: 'wb-empty' }, tr('loading'))
+            : catalog.models.length === 0
+              ? h('p', { className: 'wb-empty' }, tr('modelsEmpty'))
+              : h(
+                  'div',
+                  { className: 'wb-table-wrap' },
+                  h(
+                    'table',
+                    { className: 'wb-table' },
+                    h(
+                      'thead',
+                      null,
+                      h(
+                        'tr',
+                        null,
+                        h('th', null, tr('models')),
+                        h('th', null, tr('reasoning')),
+                        h('th', null, tr('rate')),
+                        h('th', null, tr('promo')),
+                      ),
+                    ),
+                    h('tbody', null, ...catalogRows),
+                  ),
+                ),
         ),
       )
     }

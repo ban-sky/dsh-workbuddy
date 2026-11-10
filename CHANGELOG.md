@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.0 — 2026-11-10
+
+- Reads WorkBuddy's app-channel model catalog after sign-in (54 chat models on
+  the CN gateway, 23 on the global gateway) instead of only the 20-model
+  built-in snapshot; the snapshot remains the signed-out/offline fallback.
+- The settings tab gains a **模型与计费** table: reasoning levels (default level
+  highlighted), credit multiplier, and active/upcoming promotion windows
+  (daily night windows and absolute end dates included). **刷新目录** re-reads
+  the catalog and refreshes the DSH model picker in place.
+- Adds `lib/catalog-source.js` (per-gateway app-channel UA, media filtering,
+  credits normalization) and `lib/promotions.js` (wall-clock windows, IANA
+  time zones, cross-midnight ranges).
+- New plugin icon and an inline brand mark in the settings header.
+- README/README.zh updated; 58 tests.
+
 ## 0.2.0 — 2026-11-10
 
 - **Breaking:** browser sign-in is the only credential source. The config

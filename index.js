@@ -18,6 +18,7 @@
 import z from '@deepseek-ai/schemastery'
 import { resolveImageAttachmentAccess } from '@deepseek-ai/dsh-llm'
 import { WORKBUDDY_MODELS } from './lib/catalog.js'
+import { fetchRemoteCatalog } from './lib/catalog-source.js'
 import { WorkBuddyCredentials } from './lib/credentials.js'
 import { createWorkBuddyAdapter } from './lib/adapter.js'
 import { startShim } from './lib/shim.js'
@@ -82,21 +83,43 @@ export async function apply(ctx, config) {
     )
   }
 
+  // Prefer the live app-channel roster (credits, reasoning levels, promotions),
+  // but never delay startup on it: a signed-out or offline install keeps the
+  // static snapshot.
+  let catalogState = {
+    source: 'fallback',
+    models: WORKBUDDY_MODELS,
+    fetchedAt: Date.now(),
+  }
+  if (status.signedIn) {
+    try {
+      const headers = await credentials.headers()
+      const remote = await fetchRemoteCatalog({
+        baseURL: credentials.baseURL(),
+        headers,
+        timeoutMs: 2500,
+      })
+      if (remote.source === 'remote') catalogState = remote
+    } catch (error) {
+      ctx.logger.warn(`workbuddy: 模型目录读取失败，使用内置快照：${error instanceof Error ? error.message : String(error)}`)
+    }
+  }
+
   const shim = await startShim({
     credentials,
-    models: () => WORKBUDDY_MODELS,
+    models: () => catalogState.models,
     providerId: PROVIDER_ID,
     port: cfg.port,
     logger: ctx.logger,
   })
   ctx.logger.info(
-    `workbuddy: shim listening on 127.0.0.1:${shim.port}, gateway ${credentials.baseURL()}, ${WORKBUDDY_MODELS.length} models${status.signedIn ? '' : ' (not signed in yet)'}`,
+    `workbuddy: shim listening on 127.0.0.1:${shim.port}, gateway ${credentials.baseURL()}, ${catalogState.models.length} models (${catalogState.source})${status.signedIn ? '' : ', not signed in yet'}`,
   )
 
-  const { adapter } = createWorkBuddyAdapter({
+  const { adapter, updateCatalog } = createWorkBuddyAdapter({
     providerId: PROVIDER_ID,
     displayName: 'WorkBuddy',
-    catalog: WORKBUDDY_MODELS,
+    catalog: catalogState.models,
     baseUrl: shim.url,
     shimToken: shim.token,
     resolveAttachments: () => ctx.get('attachment'),
@@ -107,6 +130,44 @@ export async function apply(ctx, config) {
         ref,
       ),
   })
+
+  let registration
+  let refreshing
+
+  /**
+   * Refresh the live catalog after sign-in and publish the new roster.
+   *
+   * @returns {Promise<object>} Catalog state.
+   */
+  async function refreshCatalog() {
+    if (refreshing !== undefined) return refreshing
+    refreshing = (async () => {
+      if (!credentials.status().signedIn) return catalogState
+      try {
+        const headers = await credentials.headers()
+        const remote = await fetchRemoteCatalog({
+          baseURL: credentials.baseURL(),
+          headers,
+          timeoutMs: 4000,
+        })
+        if (remote.source === 'remote') {
+          catalogState = remote
+          updateCatalog(remote.models)
+          try {
+            registration?.replace([PROVIDER_ID])
+          } catch (error) {
+            ctx.logger.warn(`workbuddy: 模型列表刷新失败：${error instanceof Error ? error.message : String(error)}`)
+          }
+        }
+      } catch (error) {
+        ctx.logger.warn(`workbuddy: 模型目录刷新失败：${error instanceof Error ? error.message : String(error)}`)
+      }
+      return catalogState
+    })().finally(() => {
+      refreshing = undefined
+    })
+    return refreshing
+  }
 
   ctx.inject(['connection'], (child) => {
     child.effect(
@@ -119,7 +180,8 @@ export async function apply(ctx, config) {
             credentials,
             tokenStore,
             oauth,
-            modelCount: WORKBUDDY_MODELS.length,
+            catalog: () => catalogState,
+            refreshCatalog,
             onWarning: (message) => ctx.logger.warn(`workbuddy: ${message}`),
           }),
         }),
@@ -127,6 +189,9 @@ export async function apply(ctx, config) {
     )
   })
 
-  ctx.effect(() => ctx.llm.registerAdapter([PROVIDER_ID], adapter), 'dsh-workbuddy: model provider')
+  ctx.effect(() => {
+    registration = ctx.llm.registerAdapter([PROVIDER_ID], adapter)
+    return () => registration()
+  }, 'dsh-workbuddy: model provider')
   ctx.effect(() => () => shim.close(), 'dsh-workbuddy: loopback shim')
 }

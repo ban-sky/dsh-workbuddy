@@ -13,7 +13,9 @@ DSH agent loop
    → WorkBuddy gateway  POST /v2/chat/completions
 ```
 
-The shim adds the WorkBuddy bearer token and account headers (`x-user-id`, `x-enterprise-id`, `x-tenant-id`, `x-domain`), refreshes an expiring token, and retries once on a rejected token. The 20-model catalog, native tool calls, streaming, image input, and reasoning levels are registered through DSH's provider seam.
+The shim adds the WorkBuddy bearer token and account headers (`x-user-id`, `x-enterprise-id`, `x-tenant-id`, `x-domain`), refreshes an expiring token, and retries once on a rejected token.
+
+The model roster is read from WorkBuddy's own app-channel catalog after sign-in (54 chat models on the CN gateway, 23 on the global gateway), with a built-in 20-model snapshot as fallback. The settings tab lists each model's reasoning levels, credit multiplier, and active or upcoming promotion window; **刷新目录** re-reads the catalog without restarting DSH.
 
 ## Requirements
 
@@ -25,7 +27,7 @@ The shim adds the WorkBuddy bearer token and account headers (`x-user-id`, `x-en
 From a release asset (recommended):
 
 ```sh
-dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.2.0.tgz
+dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.3.0.tgz
 ```
 
 From source:
@@ -82,12 +84,12 @@ Quota and rate-limit errors from WorkBuddy are returned to DSH as normal model e
 ## Development
 
 ```sh
-npm test        # 45 tests: credentials, OAuth, HTTP route, shim, adapter, plugin
+npm test        # 58 tests: credentials, OAuth, catalog, promotions, HTTP route, shim, adapter, plugin
 npm run verify  # syntax + manifest + locale/icon checks
 npm run build   # dist/*.tgz + sha256
 ```
 
-Layout: `lib/credentials.js` (saved token + refresh), `lib/oauth.js` (browser login), `lib/token-store.js` (0600 file), `lib/http.js` (settings route), `lib/shim.js` (loopback proxy), `lib/adapter.js` (DSH provider), `client.js` (settings tab).
+Layout: `lib/credentials.js` (saved token + refresh), `lib/oauth.js` (browser login), `lib/catalog-source.js` (live catalog + promotions), `lib/promotions.js` (windows and badges), `lib/token-store.js` (0600 file), `lib/http.js` (settings route), `lib/shim.js` (loopback proxy), `lib/adapter.js` (DSH provider), `client.js` (settings tab with the model table).
 
 GitHub Actions runs tests on Node 22/24 and publishes tagged releases.
 

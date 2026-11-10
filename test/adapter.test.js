@@ -25,7 +25,7 @@ async function harness(options = {}) {
     models: () => WORKBUDDY_MODELS,
     providerId: 'workbuddy',
   })
-  const { adapter } = createWorkBuddyAdapter({
+  const { adapter, updateCatalog } = createWorkBuddyAdapter({
     providerId: 'workbuddy',
     catalog: WORKBUDDY_MODELS,
     baseUrl: shim.url,
@@ -33,6 +33,7 @@ async function harness(options = {}) {
   })
   return {
     adapter,
+    updateCatalog,
     upstream,
     close: async () => {
       await shim.close()
@@ -69,6 +70,19 @@ test('lists the catalog with modalities and reasoning levels', async () => {
       resolved.reasoning.efforts.map((effort) => effort.id),
       ['low', 'high', 'max'],
     )
+  } finally {
+    await context.close()
+  }
+})
+
+test('updateCatalog changes the roster served to DSH without re-registering', async () => {
+  const context = await harness()
+  try {
+    assert.equal((await context.adapter.listModels('workbuddy')).length, WORKBUDDY_MODELS.length)
+    context.updateCatalog([{ ...WORKBUDDY_MODELS[0], id: 'refreshed-model', name: 'Refreshed' }])
+    const models = await context.adapter.listModels('workbuddy')
+    assert.equal(models.length, 1)
+    assert.equal(models[0].id, 'refreshed-model')
   } finally {
     await context.close()
   }

@@ -1,7 +1,7 @@
 {
   "name": "@ban-sky/dsh-workbuddy",
-  "version": "0.2.0",
-  "description": "WorkBuddy / CodeBuddy models in DeepSeek Harness, connected through a one-time browser sign-in. No desktop app required on the DSH host.",
+  "version": "0.3.0",
+  "description": "WorkBuddy / CodeBuddy models in DeepSeek Harness: one-time browser sign-in, live model catalog with reasoning levels, credit multipliers, and promotion windows.",
   "type": "module",
   "engines": {
     "node": ">=22"
@@ -41,7 +41,7 @@
     "test": "node --test test/*.test.js",
     "test:watch": "node --test --watch test/*.test.js",
     "build": "node scripts/build.mjs",
-    "verify": "node --check index.js && node --check client.js && node --check lib/catalog.js && node --check lib/credentials.js && node --check lib/http.js && node --check lib/jwt.js && node --check lib/oauth.js && node --check lib/shim.js && node --check lib/adapter.js && node --check lib/token-store.js"
+    "verify": "node --check index.js && node --check client.js && node --check lib/catalog.js && node --check lib/catalog-source.js && node --check lib/credentials.js && node --check lib/http.js && node --check lib/jwt.js && node --check lib/oauth.js && node --check lib/promotions.js && node --check lib/shim.js && node --check lib/adapter.js && node --check lib/token-store.js"
   },
   "dsh": {
     "bundle": {

@@ -94,7 +94,33 @@ function harness(options = {}) {
   const store = new TokenStore({ path: join(directory, '.workbuddy-credentials.json') })
   const credentials = fakeCredentials(options)
   const oauth = fakeOAuth()
-  const handle = createWorkBuddyHandler({ credentials, tokenStore: store, oauth, modelCount: 20 })
+  const catalogState = {
+    source: 'fallback',
+    fetchedAt: 1_700_000_000_000,
+    models: Array.from({ length: 20 }, (_, index) => ({
+      id: index === 0 ? 'glm-5.3' : 'model-' + index,
+      name: 'Model ' + index,
+      contextWindow: 200_000,
+      maxTokens: 32_000,
+      supportsImages: index === 0,
+      efforts: ['off', 'low', 'high'],
+      reasoningDefault: 'high',
+      canDisableThinking: true,
+      credits: 0.29,
+      creditsText: '×0.29',
+      descriptionZh: '中文说明',
+      descriptionEn: 'English description',
+      promotion: index === 0 ? { id: 'promo', badge: { label: '限时免费' }, status: 'active' } : undefined,
+      tier: index === 0 ? { badge: { label: '订阅优先' } } : undefined,
+    })),
+  }
+  const handle = createWorkBuddyHandler({
+    credentials,
+    tokenStore: store,
+    oauth,
+    catalog: () => catalogState,
+    refreshCatalog: async () => catalogState,
+  })
   return { handle, store, credentials, oauth }
 }
 
@@ -129,6 +155,29 @@ test('status reports non-secret state only', async () => {
   assert.equal(text.includes('secret-token'), false)
   assert.equal(Object.hasOwn(body.value, 'token'), false)
   assert.equal(Object.hasOwn(body.value, 'authFile'), false)
+})
+
+test('models action returns roster metadata without secrets', async () => {
+  const { handle } = harness()
+  const { status, body, text } = await post(handle, { action: 'models' })
+  assert.equal(status, 200)
+  assert.equal(body.ok, true)
+  assert.equal(body.value.source, 'fallback')
+  assert.equal(body.value.models.length, 20)
+  assert.deepEqual(body.value.models[0].efforts, ['off', 'low', 'high'])
+  assert.equal(body.value.models[0].creditsText, '×0.29')
+  assert.equal(body.value.models[0].promotion.badge.label, '限时免费')
+  assert.equal(body.value.models[0].tier.badge.label, '订阅优先')
+  assert.equal(text.includes('secret-token'), false)
+  assert.equal(text.includes('提示词'), false)
+})
+
+test('refreshModels returns the refreshed roster', async () => {
+  const { handle } = harness()
+  const { status, body } = await post(handle, { action: 'refreshModels' })
+  assert.equal(status, 200)
+  assert.equal(body.ok, true)
+  assert.equal(body.value.models.length, 20)
 })
 
 test('clear removes the saved token and reloads credentials', async () => {

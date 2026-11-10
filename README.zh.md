@@ -13,7 +13,9 @@ DSH Agent 循环
    → WorkBuddy 网关  POST /v2/chat/completions
 ```
 
-本地 shim 负责注入 WorkBuddy 的 Bearer token 与账号头（`x-user-id`、`x-enterprise-id`、`x-tenant-id`、`x-domain`），token 将过期时自动刷新，被拒绝时重试一次。20 个模型的目录、原生工具调用、流式输出、图片输入和推理等级通过 DSH 的 provider 接口注册。
+本地 shim 负责注入 WorkBuddy 的 Bearer token 与账号头（`x-user-id`、`x-enterprise-id`、`x-tenant-id`、`x-domain`），token 将过期时自动刷新，被拒绝时重试一次。
+
+登录后会读取 WorkBuddy 官方应用通道目录（中国站 54 个对话模型，国际站 23 个），失败时回退到内置的 20 个模型快照。设置页会列出每个模型的推理等级、点数倍率和进行中/即将开始的优惠时段；**刷新目录** 可在不重启 DSH 的情况下重新读取。
 
 ## 环境要求
 
@@ -25,7 +27,7 @@ DSH Agent 循环
 推荐从 Release 安装：
 
 ```sh
-dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.2.0.tgz
+dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.3.0.tgz
 ```
 
 从源码安装：
@@ -82,12 +84,12 @@ WorkBuddy 的配额、限流错误会作为普通模型错误返回 DSH。
 ## 开发
 
 ```sh
-npm test        # 45 项测试：credentials、OAuth、HTTP 路由、shim、adapter、插件
+npm test        # 58 项测试：credentials、OAuth、模型目录、优惠、HTTP 路由、shim、adapter、插件
 npm run verify  # 语法 + manifest + locale/icon 检查
 npm run build   # dist/*.tgz + sha256
 ```
 
-代码结构：`lib/credentials.js`（保存的 token 与刷新）、`lib/oauth.js`（网页登录）、`lib/token-store.js`（0600 文件）、`lib/http.js`（设置页路由）、`lib/shim.js`（本地代理）、`lib/adapter.js`（DSH provider）、`client.js`（设置页）。
+代码结构：`lib/credentials.js`（保存的 token 与刷新）、`lib/oauth.js`（网页登录）、`lib/catalog-source.js`（在线目录与优惠）、`lib/promotions.js`（时段与徽章）、`lib/token-store.js`（0600 文件）、`lib/http.js`（设置页路由）、`lib/shim.js`（本地代理）、`lib/adapter.js`（DSH provider）、`client.js`（含模型表的设置页）。
 
 GitHub Actions 在 Node 22/24 上跑测试，并在打 tag 时发布 Release。
 
