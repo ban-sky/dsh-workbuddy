@@ -6,6 +6,7 @@
   "engines": {
     "node": ">=22"
   },
+  "icon": "./icon.svg",
   "main": "index.js",
   "exports": {
     ".": "./index.js",

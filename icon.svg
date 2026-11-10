@@ -1,5 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="WorkBuddy">
-  <rect x="4" y="4" width="56" height="56" rx="16" fill="none" stroke="currentColor" stroke-width="3"/>
-  <path d="M14 22l6.4 20 5.6-13 5.6 13L38 22" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
-  <circle cx="47" cy="22" r="3" fill="currentColor"/>
+  <style>
+    .ink { fill: none; stroke: #111111; stroke-width: 3; }
+    .dot { fill: #111111; }
+    @media (prefers-color-scheme: dark) {
+      .ink { stroke: #f5f5f5; }
+      .dot { fill: #f5f5f5; }
+    }
+  </style>
+  <rect class="ink" x="4.5" y="4.5" width="55" height="55" rx="16" stroke-width="3"/>
+  <path class="ink" d="M14 22l6.4 20 5.6-13 5.6 13L38 22" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle class="dot" cx="47" cy="22" r="3"/>
 </svg>
