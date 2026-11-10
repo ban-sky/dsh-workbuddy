@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "WorkBuddy",
-    "description": "Bring WorkBuddy / CodeBuddy models into DeepSeek Harness: open the WorkBuddy panel in the sidebar to sign in once and load the official model catalog, reasoning levels, credit multipliers, and promotions, with multi-account isolation, credit balance, and per-account pacing. Tokens never leave this machine."
+    "description": "Bring WorkBuddy / CodeBuddy models into DeepSeek Harness: open the WorkBuddy panel in the sidebar to sign in once and load the official model catalog, reasoning levels, credit multipliers, and promotions, with multi-account isolation, credit balance, token usage statistics, and per-account pacing. Tokens never leave this machine."
   }
 }

@@ -1,6 +1,6 @@
 {
   "meta": {
     "title": "WorkBuddy",
-    "description": "把 WorkBuddy / CodeBuddy 账号的模型接入 DeepSeek Harness：在侧边栏打开 WorkBuddy 面板完成一次网页登录，自动读取官方模型目录、推理等级、点数倍率与限时优惠；支持多账号隔离、积分显示与防风控节流，令牌不出本机。"
+    "description": "把 WorkBuddy / CodeBuddy 账号的模型接入 DeepSeek Harness：在侧边栏打开 WorkBuddy 面板完成一次网页登录，自动读取官方模型目录、推理等级、点数倍率与限时优惠；支持多账号隔离、积分与 token 用量统计、防风控节流，令牌不出本机。"
   }
 }
