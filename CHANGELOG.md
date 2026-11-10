@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.9.3 — 2026-11-11
+
+- **The usage card can no longer be silently empty.** When the settings route
+  answers `UNKNOWN_ACTION` (a Host half older than the panel) the card now says
+  the statistics module is not loaded yet instead of rendering six zeros, and an
+  empty card offers a **Send a self-test** button instead of only a sentence.
+- **The self-test proves the whole chain.** `usageProbe` sends one 1-token
+  streaming completion through the plugin's own loopback shim — the same path a
+  real conversation takes — so the reply exercises shim tap → ledger → settings
+  route. It costs 0 credits (single output token) and returns the counters it
+  just produced.
+- **The ledger is shared safely.** `UsageLedger` gained `reload()`: it re-reads
+  the file when another instance (the shim records, the route reads) has written
+  it, so the panel can no longer show a stale snapshot. Unflushed local counters
+  still win, so a pending write is never clobbered.
+- **`usage`/`resetUsage` fall back to the on-disk ledger** when the Host module
+  that records completions was not reloaded with the route, so counters already
+  on disk stay visible.
+- Only requests that go through this plugin are counted — other providers never
+  reach the ledger, which is stated in the card hint.
+
 ## 0.9.2 — 2026-11-10
 
 - **Fixed the dark-mode text that was nearly invisible.** The panel referenced

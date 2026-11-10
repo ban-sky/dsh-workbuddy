@@ -53,6 +53,9 @@ window.__ModuleLoader__.load({
       usageCreditsPerKToken: '每千 token 积分',
       usageCacheHitRate: '缓存命中率',
       usageRefresh: '刷新用量',
+      usageProbe: '发送自检请求',
+      usageProbeOk: '自检完成，已记录一次 1 token 的调用。',
+      usageRestart: '统计模块尚未加载。重启一次 DSH 后即可显示。',
       usageReset: '清零统计',
       usageConfirmReset: '再次点击清零',
       usageEmpty: '还没有用量记录。发起一次对话后，这里会显示输入、输出与缓存命中情况。',
@@ -151,6 +154,9 @@ window.__ModuleLoader__.load({
       usageCreditsPerKToken: 'Credits per 1K tokens',
       usageCacheHitRate: 'Cache hit rate',
       usageRefresh: 'Refresh usage',
+      usageProbe: 'Send a self-test',
+      usageProbeOk: 'Self-test complete — one 1-token call was recorded.',
+      usageRestart: 'The statistics module is not loaded yet. Restart DSH once to enable it.',
       usageReset: 'Reset',
       usageConfirmReset: 'Click again to reset',
       usageEmpty: 'No usage recorded yet. Start a conversation and the input, output, and cache figures appear here.',
@@ -487,6 +493,7 @@ window.__ModuleLoader__.load({
 .wb-chips-sm .wb-chip{height:18px;padding:0 6px;font-size:10.5px;border-radius:5px}
 .wb-usage-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 @media(max-width:640px){.wb-usage-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.wb-usage-empty{display:flex;flex-direction:column;align-items:flex-start;gap:10px;padding:4px 0 2px}
 .wb-usage-cell{display:flex;flex-direction:column;gap:2px;padding:9px 11px;border:.5px solid var(--dsw-alias-border-l4);border-radius:10px;min-width:0;transition:border-color .15s ease,background .15s ease}
 .wb-usage-cell:hover{border-color:var(--dsw-alias-border-l3);background:color-mix(in srgb, var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.04)) 50%, transparent)}
 .wb-usage-label{font-size:11px;line-height:16px;color:var(--dsw-alias-label-tertiary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -583,6 +590,7 @@ window.__ModuleLoader__.load({
       const [usage, setUsage] = useState(null)
       const [usageBusy, setUsageBusy] = useState(false)
       const [usageResetArmed, setUsageResetArmed] = useState(false)
+      const [usageUnavailable, setUsageUnavailable] = useState(false)
 
       const toggle = (key) => setOpen((current) => ({ ...current, [key]: !current[key] }))
 
@@ -641,11 +649,28 @@ window.__ModuleLoader__.load({
         setUsageBusy(true)
         try {
           setUsage(await call(action, payload))
+          setUsageUnavailable(false)
         } catch (error) {
-          // An older Host half has no `usage` action; the card simply stays empty.
-          if (error?.code !== 'UNKNOWN_ACTION') {
-            setMessage({ kind: 'error', text: tr('statusError') + ': ' + error.message })
-          }
+          // An older Host half has no `usage` action; say so instead of showing zeros.
+          if (error?.code === 'UNKNOWN_ACTION') setUsageUnavailable(true)
+          else setMessage({ kind: 'error', text: tr('statusError') + ': ' + error.message })
+        } finally {
+          setUsageBusy(false)
+        }
+      }, [tr])
+
+      // Sends one 1-token completion through the plugin's own shim, then shows the
+      // counters it produced. This is the only way to prove the recording path
+      // without waiting for a real conversation.
+      const onProbeUsage = useCallback(async () => {
+        setUsageBusy(true)
+        try {
+          setUsage(await call('usageProbe'))
+          setUsageUnavailable(false)
+          setMessage({ kind: 'ok', text: tr('usageProbeOk') })
+        } catch (error) {
+          if (error?.code === 'USAGE_PROBE_UNAVAILABLE') setUsageUnavailable(true)
+          else setMessage({ kind: 'error', text: error.message })
         } finally {
           setUsageBusy(false)
         }
@@ -1118,7 +1143,23 @@ window.__ModuleLoader__.load({
       const usageBody = [
         h('p', { className: 'wb-hint' }, tr('usageHint')),
         usageTotals === null || usageTotals.requests === 0
-          ? h('p', { className: 'wb-empty' }, tr('usageEmpty'))
+          ? h(
+              'div',
+              { className: 'wb-usage-empty' },
+              h('p', { className: 'wb-empty' }, usageUnavailable ? tr('usageRestart') : tr('usageEmpty')),
+              usageUnavailable
+                ? null
+                : h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'wb-btn wb-btn-sm',
+                      disabled: usageBusy,
+                      onClick: onProbeUsage,
+                    },
+                    tr('usageProbe'),
+                  ),
+            )
           : h(
               'div',
               { className: 'wb-usage-grid' },

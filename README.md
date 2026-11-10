@@ -28,6 +28,7 @@ The **Usage** card under the model table shows what this machine has spent throu
 - tokens per credit, credits per 1K tokens, and the cache hit rate;
 - a per-model breakdown of tokens and credits;
 - **Refresh usage** and **Reset** in the card header (reset needs a second click and clears the current account only).
+- When the card is empty you can press **Send a self-test**: it runs one 1-token call through the plugin's own local proxy, exercising record → flush → panel end to end (a single token bills 0 credits). Only requests sent to WorkBuddy are counted; other providers never enter the ledger.
 
 Credits come straight from the `usage.credit` field WorkBuddy returns with every response, and cache hits from `prompt_cache_hit_tokens`, so the numbers match server-side billing. Statistics are isolated per account and stored in `$DSH_HOME/.workbuddy-usage.json` (mode 0600) as counters only — no conversation content is ever written.
 
@@ -41,7 +42,7 @@ Credits come straight from the `usage.credit` field WorkBuddy returns with every
 From a release asset (recommended):
 
 ```sh
-dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.9.2.tgz
+dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.9.3.tgz
 ```
 
 From source:
@@ -110,7 +111,7 @@ Quota and rate-limit errors from WorkBuddy are returned to DSH as normal model e
 ## Development
 
 ```sh
-npm test        # 112 tests: account store, device identity and pacing, credits, usage ledger, credentials, OAuth, catalog, promotions, HTTP route, shim, adapter, plugin
+npm test        # 116 tests: account store, device identity and pacing, credits, usage ledger, credentials, OAuth, catalog, promotions, HTTP route, shim, adapter, plugin
 npm run verify  # syntax + manifest + locale/icon checks
 npm run build   # dist/*.tgz + sha256
 ```

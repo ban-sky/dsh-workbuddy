@@ -188,6 +188,31 @@ export async function apply(ctx, config) {
     return refreshing
   }
 
+  /**
+   * Spend one output token through the local shim so the usage ledger can be
+   * checked end to end (shim tap → ledger → settings route). Runs the same code
+   * path as a real completion, which is why it proves the wiring.
+   */
+  async function probeUsage() {
+    const model = catalogState.models[0]?.id ?? 'deepseek-v4-flash'
+    const response = await fetch(`${shim.url}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${shim.token}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: [{ role: 'user', content: 'ping' }],
+        max_tokens: 1,
+        stream: true,
+      }),
+    })
+    // Drain the stream so the tap sees the trailing usage chunk.
+    await response.text()
+    if (!response.ok) throw new Error(`自检请求返回 HTTP ${response.status}`)
+  }
+
   ctx.inject(['connection'], (child) => {
     child.effect(
       () =>
@@ -203,6 +228,7 @@ export async function apply(ctx, config) {
             catalog: () => catalogState,
             refreshCatalog,
             usage,
+            probeUsage,
             onWarning: (message) => ctx.logger.warn(`workbuddy: ${message}`),
           }),
         }),

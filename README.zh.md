@@ -28,6 +28,7 @@ DSH Agent 循环
 - **每积分 token 数**、**每千 token 积分**与**缓存命中率**；
 - **按模型**拆分的 token 与积分小计；
 - 右上角可**刷新用量**，或**清零统计**（点两次确认，只清除当前账号的统计）。
+- 卡片为空时可以直接点**发送自检请求**：它会通过插件自己的本地代理发一次 1 token 的调用，把「记录 → 落盘 → 面板」整条链路跑一遍（单 token 计费为 0）。只统计 WorkBuddy 发出的请求，其他 provider 的对话不会计入。
 
 积分消耗直接取自 WorkBuddy 每次响应返回的 `usage.credit`，缓存命中取自 `prompt_cache_hit_tokens`，因此数字与服务端计费一致。统计按账号隔离，保存在 `$DSH_HOME/.workbuddy-usage.json`（权限 0600），只记录计数，不记录任何对话内容。
 
@@ -41,7 +42,7 @@ DSH Agent 循环
 推荐从 Release 安装：
 
 ```sh
-dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.9.2.tgz
+dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.9.3.tgz
 ```
 
 从源码安装：
@@ -110,7 +111,7 @@ WorkBuddy 的配额、限流错误会作为普通模型错误返回 DSH。
 ## 开发
 
 ```sh
-npm test        # 112 项测试：账号存储、设备标识与节流、积分、用量账本、credentials、OAuth、模型目录、优惠、HTTP 路由、shim、adapter、插件
+npm test        # 116 项测试：账号存储、设备标识与节流、积分、用量账本、credentials、OAuth、模型目录、优惠、HTTP 路由、shim、adapter、插件
 npm run verify  # 语法 + manifest + locale/icon 检查
 npm run build   # dist/*.tgz + sha256
 ```
