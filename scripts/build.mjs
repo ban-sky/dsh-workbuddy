@@ -36,6 +36,7 @@ const sources = [
   'index.js',
   'client.js',
   'lib/accounts.js',
+  'lib/benefits.js',
   'lib/catalog.js',
   'lib/catalog-source.js',
   'lib/credentials.js',

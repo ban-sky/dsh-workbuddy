@@ -1,5 +1,36 @@
 # Changelog
 
+## 0.10.0 — 2026-11-23
+
+- **Claimable welfare credits.** The accounts card now lists the two official
+  give-aways — the new-user gift and the compensation grant — with their credit
+  amount, window, and state, and a **Claim** button while an activity is
+  running and unclaimed. `active` alone is not enough (a claimed activity keeps
+  reporting it), and the status is re-read immediately before writing so a
+  stale panel cannot fire a second claim; enterprise accounts get no button at
+  all. New `lib/benefits.js` wraps
+  `/billing/meter/{check-gift-claimed,claim-gift,compensation-status,claim-compensation}`,
+  plus the `benefits` and `claimBenefit` route actions.
+- **Rate-limit backoff instead of retrying.** An upstream HTTP 429 now pauses
+  *only the throttled account* (60 s, or its `retry-after`, capped at 15 min)
+  through a new `RequestPacer.coolDown`, because retrying into a limit is what
+  turns a throttle into a risk-control flag.
+- **Pacing jitter.** Request starts keep the 1.2 s minimum gap but add 0–400 ms
+  of random jitter, so a run of calls never forms a perfectly periodic train
+  (`PACING_JITTER_MS`).
+- **A request id on every attempt.** Each upstream call, including the 401
+  refresh retry, carries a fresh `x-request-id`, so a retry can never be
+  mistaken for a duplicate submit.
+- **Usage history no longer reads as a column of addresses.** The panel now
+  strips the conversation address marker (`<acp …>m00123</acp>`) from the
+  *current* user turn before forwarding — earlier turns keep theirs, because
+  those are what the model cites. WorkBuddy's usage page lists a request by the
+  text of its last user message, so this is what turned every row into
+  `<acp …>`.
+- 132 tests (was 116): 10 for the welfare client, 3 for the new route actions,
+  3 for the shim hardening. `npm run verify` and `scripts/build.mjs` now cover
+  `lib/benefits.js`.
+
 ## 0.9.3 — 2026-11-11
 
 - **The usage card can no longer be silently empty.** When the settings route

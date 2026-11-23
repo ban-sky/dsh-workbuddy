@@ -42,7 +42,7 @@ Credits come straight from the `usage.credit` field WorkBuddy returns with every
 From a release asset (recommended):
 
 ```sh
-dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.9.3.tgz
+dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.10.0.tgz
 ```
 
 From source:
@@ -71,11 +71,23 @@ Signing in again adds a **new account** instead of overwriting the existing one.
 - **Switch** makes an account active; model requests and credit lookups only ever use the active account.
 - **Rename** changes only the label, **Remove** asks for a second click, and removing the active account promotes the next one.
 - Every account gets its own device identity and request pacing channel, so accounts never block or impersonate each other.
+- Pacing is per account: starts are at least 1.2 s apart plus 0–400 ms of jitter, with at most 2 in flight; an HTTP 429 pauses only that account (60 s, or its `retry-after`) instead of retrying into the limit.
 - All accounts live in `$DSH_HOME/.workbuddy-credentials.json` (mode `0600`, atomic write); the device salt sits next to it in `.device`. **Sign out** removes only the active account.
 
 ## Credits
 
 The accounts card shows the active account's credit balance: the total, a remaining/total progress bar per package, cycle end dates, and the nearest expiry. It is read from WorkBuddy's billing endpoint, on this machine only; enterprise accounts use the enterprise quota table and personal accounts use the package table. A failed read shows an error instead of reporting zero.
+
+## Welfare credits
+
+Under the account card the panel lists the official welfare credits this account can still claim:
+
+- **New-user gift** and **compensation credit** each get a row with the credit amount and its window;
+- the **Claim** button appears only while an activity is running *and* unclaimed — a claimed activity keeps answering `active`, so that flag alone would mislead;
+- the status is re-read right before claiming: an already-claimed or expired activity returns a conflict locally and never reaches the network;
+- enterprise accounts get no claim button, because upstream rejects them with the same "already claimed" error.
+
+Claiming uses the console's `check-gift-claimed`, `claim-gift`, `compensation-status` and `claim-compensation` endpoints, one activity for one account per click.
 
 ## Configuration
 
@@ -94,7 +106,8 @@ The plugin usually needs no configuration. Optional keys, set on the `workbuddy`
 - **Browser login is the only credential source.** There is no config token, environment token, CLI token, or paste field; encrypted `$wbEncrypted` envelopes are rejected by design.
 - The token file is `0600` under `$DSH_HOME`, is never written to logs, the plugin config, or an HTTP response, and is excluded from the npm package.
 - The shim listens on `127.0.0.1` only, with a random per-boot bearer key; the real WorkBuddy token stays inside the Host process.
-- Outbound traffic goes only to the selected WorkBuddy gateway.
+- Outbound traffic goes only to the selected WorkBuddy gateway, and every call carries a fresh `x-request-id` so a retry stays distinguishable from a duplicate submit.
+- The conversation address marker (`<acp …>m00123</acp>`) is stripped from the **current** user turn before forwarding; earlier turns keep theirs, so the WorkBuddy usage page lists real request text instead of a column of addresses.
 
 ## Troubleshooting
 
@@ -111,7 +124,7 @@ Quota and rate-limit errors from WorkBuddy are returned to DSH as normal model e
 ## Development
 
 ```sh
-npm test        # 116 tests: account store, device identity and pacing, credits, usage ledger, credentials, OAuth, catalog, promotions, HTTP route, shim, adapter, plugin
+npm test        # 132 tests: account store, device identity and pacing, welfare benefits, credits, usage ledger, credentials, OAuth, catalog, promotions, HTTP route, shim, adapter, plugin
 npm run verify  # syntax + manifest + locale/icon checks
 npm run build   # dist/*.tgz + sha256
 ```

@@ -104,7 +104,8 @@ function harness(options = {}) {
   const store = new TokenStore({ path: join(directory, '.workbuddy-credentials.json') })
   const credentials = fakeCredentials({ ...options, store })
   const oauth = fakeOAuth()
-  const usage = options.usage ?? new UsageLedger({ path: '' })
+  // `usage: undefined` deliberately means "the Host did not inject one".
+  const usage = 'usage' in options ? options.usage : new UsageLedger({ path: '' })
   const catalogState = {
     source: 'fallback',
     fetchedAt: 1_700_000_000_000,
@@ -132,6 +133,7 @@ function harness(options = {}) {
     catalog: () => catalogState,
     refreshCatalog: async () => catalogState,
     usage,
+    probeUsage: options.probeUsage,
     fetchImpl: options.fetchImpl ?? globalThis.fetch,
   })
   return { handle, store, credentials, oauth, usage }
@@ -450,4 +452,89 @@ test('resetUsage clears the active account and leaves the others alone', async (
   // The other account still has its counters.
   const other = await post(handle, { action: 'usage', id: 'u-2' })
   assert.equal(other.body.value.totals.requests, 1)
+})
+
+test('usageProbe reports the counters the probe recorded', async () => {
+  let probes = 0
+  const { handle, usage } = harness({
+    probeUsage: async () => {
+      probes += 1
+      // The real probe spends one output token, so the ledger gains one request.
+      usage.record({
+        accountId: 'u-1',
+        model: 'glm-5.3',
+        usage: { prompt_tokens: 3, completion_tokens: 1, total_tokens: 4, credit: 0 },
+      })
+    },
+  })
+  const result = await post(handle, { action: 'usageProbe' })
+  assert.equal(result.status, 200)
+  assert.equal(probes, 1)
+  assert.equal(result.body.value.totals.requests, 1)
+  assert.equal(result.body.value.totals.completionTokens, 1)
+})
+
+test('usageProbe explains itself when the Host half is too old', async () => {
+  const { handle } = harness()
+  const result = await post(handle, { action: 'usageProbe' })
+  assert.equal(result.status, 501)
+  assert.equal(result.body.error.code, 'USAGE_PROBE_UNAVAILABLE')
+})
+
+test('usage falls back to the on-disk ledger when none is injected', async (t) => {
+  const directory = mkdtempSync(join(tmpdir(), 'dsh-workbuddy-usage-'))
+  const previous = process.env.DSH_HOME
+  process.env.DSH_HOME = directory
+  t.after(() => {
+    if (previous === undefined) delete process.env.DSH_HOME
+    else process.env.DSH_HOME = previous
+  })
+  const ledger = new UsageLedger({ path: join(directory, '.workbuddy-usage.json') })
+  ledger.record({ accountId: 'u-1', model: 'glm-5.3', usage: { prompt_tokens: 10, completion_tokens: 2, total_tokens: 12, credit: 0.01 } })
+  ledger.flush()
+
+  const { handle } = harness({ usage: undefined })
+  const result = await post(handle, { action: 'usage' })
+  assert.equal(result.status, 200)
+  assert.equal(result.body.value.totals.requests, 1)
+  assert.equal(result.body.value.totals.totalTokens, 12)
+})
+
+test('benefits reports claimable activities without leaking the token', async () => {
+  const fetchImpl = async (url) => {
+    const path = new URL(String(url)).pathname
+    if (path.endsWith('check-gift-claimed')) {
+      return Response.json({ code: 0, data: { claimed: false, active: true, credit_num: 1500, validity_period: 1, start_time: '2026-04-01 00:00:00', end_time: '2026-11-30 23:59:59' } })
+    }
+    return Response.json({ code: 0, data: { claimed: true, active: false, credit_num: 500, validity_period: 1, end_time: '2026-10-22 23:59:59' } })
+  }
+  const { handle } = harness({ fetchImpl })
+  const result = await post(handle, { action: 'benefits' })
+  assert.equal(result.status, 200)
+  assert.equal(result.body.ok, true)
+  assert.equal(result.body.value.gift.pending, true)
+  assert.equal(result.body.value.compensation.claimed, true)
+  assert.equal(result.text.includes('secret-token'), false)
+})
+
+test('claimBenefit refuses an already claimed activity without a write', async () => {
+  const calls = []
+  const fetchImpl = async (url) => {
+    const path = new URL(String(url)).pathname
+    calls.push(path)
+    if (path.endsWith('claim-gift')) return Response.json({ code: 10_001, msg: '每人限领一次' })
+    return Response.json({ code: 0, data: { claimed: true, active: true, credit_num: 1500 } })
+  }
+  const { handle } = harness({ fetchImpl })
+  const result = await post(handle, { action: 'claimBenefit', kind: 'gift' })
+  assert.equal(result.status, 409)
+  assert.equal(result.body.error.code, 'BENEFIT_ALREADY_CLAIMED')
+  assert.equal(calls.some((path) => path.endsWith('claim-gift')), false)
+})
+
+test('claimBenefit needs a kind', async () => {
+  const { handle } = harness()
+  const result = await post(handle, { action: 'claimBenefit' })
+  assert.equal(result.status, 400)
+  assert.equal(result.body.error.code, 'MISSING_BENEFIT_KIND')
 })

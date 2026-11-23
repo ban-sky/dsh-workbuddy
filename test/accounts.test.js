@@ -80,7 +80,7 @@ test('an unreadable salt file is replaced rather than reused', () => {
 
 test('pacing spaces request starts per account', async () => {
   let clock = 0
-  const pacer = new RequestPacer({ minGapMs: 500, maxConcurrent: 2, now: () => clock })
+  const pacer = new RequestPacer({ minGapMs: 500, maxConcurrent: 2, now: () => clock, jitterMs: 0 })
   const first = await pacer.acquire('uid-a')
   assert.equal(first, undefined)
   assert.equal(pacer.channel('uid-a').active, 1)
@@ -101,7 +101,7 @@ test('pacing spaces request starts per account', async () => {
 })
 
 test('one account never blocks another', async () => {
-  const pacer = new RequestPacer({ minGapMs: 60_000, maxConcurrent: 1, now: () => 0 })
+  const pacer = new RequestPacer({ minGapMs: 60_000, maxConcurrent: 1, now: () => 0, jitterMs: 0 })
   await pacer.acquire('uid-a')
   // uid-a is saturated for a minute, but uid-b must run immediately.
   const started = Date.now()
@@ -113,7 +113,7 @@ test('one account never blocks another', async () => {
 
 test('the concurrency cap holds within one account', async () => {
   let clock = 0
-  const pacer = new RequestPacer({ minGapMs: 0, maxConcurrent: MAX_CONCURRENT_PER_ACCOUNT, now: () => clock })
+  const pacer = new RequestPacer({ minGapMs: 0, maxConcurrent: MAX_CONCURRENT_PER_ACCOUNT, now: () => clock, jitterMs: 0 })
   for (let index = 0; index < MAX_CONCURRENT_PER_ACCOUNT; index += 1) {
     await pacer.acquire('uid-a')
   }
@@ -129,7 +129,7 @@ test('the concurrency cap holds within one account', async () => {
 })
 
 test('releasing and forgetting an account resets its channel', async () => {
-  const pacer = new RequestPacer({ minGapMs: 0, maxConcurrent: 2, now: () => 0 })
+  const pacer = new RequestPacer({ minGapMs: 0, maxConcurrent: 2, now: () => 0, jitterMs: 0 })
   await pacer.acquire('uid-a')
   pacer.release('uid-a')
   assert.equal(pacer.channel('uid-a').active, 0)

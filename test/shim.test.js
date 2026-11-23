@@ -289,3 +289,82 @@ test('forwards a non-chat body unchanged', () => {
   const raw = Buffer.from('{"input":"hello"}')
   assert.equal(prepareChannelBody(raw), raw)
 })
+
+test('strips conversation address markers before forwarding', async () => {
+  const upstream = await startFakeWorkBuddy()
+  const shim = await startShim({
+    credentials: savedCredentials(upstream.url),
+    models: () => [WORKBUDDY_MODELS[0]],
+  })
+  try {
+    const response = await postChat(shim.url, shim.token, {
+      model: 'glm-5.2',
+      messages: [
+        { role: 'user', content: '<acp tokens="10" type="text">m00001</acp>\nfirst question' },
+        { role: 'assistant', content: 'first answer' },
+        { role: 'user', content: '<acp tokens="20" type="text">m00002</acp>\n更新版本' },
+      ],
+    })
+    assert.equal(response.status, 200)
+    await response.text()
+    const sent = upstream.requests[0].body.messages
+    // Earlier turns keep their labels: the model cites them.
+    assert.equal(sent[0].content, '<acp tokens="10" type="text">m00001</acp>\nfirst question')
+    // The last turn is what the usage page records, so its label is removed.
+    assert.equal(sent[2].content, '更新版本')
+  } finally {
+    await shim.close()
+    await upstream.close()
+  }
+})
+
+test('sends a fresh request id on every upstream attempt', async () => {
+  const upstream = await startFakeWorkBuddy()
+  const shim = await startShim({
+    credentials: savedCredentials(upstream.url),
+    models: () => [WORKBUDDY_MODELS[0]],
+  })
+  try {
+    for (const text of ['one', 'two']) {
+      const response = await postChat(shim.url, shim.token, { model: 'glm-5.2', messages: [{ role: 'user', content: text }] })
+      await response.text()
+    }
+    const ids = upstream.requests.map((request) => request.headers['x-request-id'])
+    assert.equal(ids.length, 2)
+    assert.match(ids[0], /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/)
+    assert.notEqual(ids[0], ids[1])
+  } finally {
+    await shim.close()
+    await upstream.close()
+  }
+})
+
+test('a rate-limited account is paused instead of retried', async () => {
+  const upstream = await startFakeWorkBuddy({
+    chatOverride: () => ({ status: 429, body: { code: 6004, msg: '请求过于频繁' } }),
+  })
+  const pauses = []
+  const shim = await startShim({
+    credentials: savedCredentials(upstream.url),
+    models: () => [WORKBUDDY_MODELS[0]],
+    pacer: {
+      async acquire() {},
+      release() {},
+      coolDown(key, ms) {
+        pauses.push({ key, ms })
+      },
+    },
+  })
+  try {
+    const response = await postChat(shim.url, shim.token, { model: 'glm-5.2', messages: [{ role: 'user', content: 'hi' }] })
+    assert.equal(response.status, 429)
+    await response.text()
+    assert.equal(upstream.requests.length, 1)
+    assert.equal(pauses.length, 1)
+    assert.equal(pauses[0].key, 'default')
+    assert.equal(pauses[0].ms, 60_000)
+  } finally {
+    await shim.close()
+    await upstream.close()
+  }
+})

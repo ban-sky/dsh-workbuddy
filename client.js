@@ -42,6 +42,17 @@ window.__ModuleLoader__.load({
       creditsPackage: '积分套餐',
       creditsSourcePersonal: '积分来自 WorkBuddy 个人计费接口。',
       creditsSourceEnterprise: '积分来自 WorkBuddy 企业计费接口。',
+      benefitsTitle: '可领取福利',
+      benefitGift: '新人福利',
+      benefitCompensation: '补偿福利',
+      benefitPending: '待领取',
+      benefitClaimed: '已领取',
+      benefitInactive: '已结束',
+      benefitClaim: '领取',
+      benefitCredits: '{n} 积分',
+      benefitUntil: '有效期至 {date}',
+      benefitEnterprise: '企业账号没有个人福利可以领取。',
+      benefitClaimedOk: '福利已领取，积分已到账。',
       secUsage: '用量统计',
       usageInput: '输入',
       usageOutput: '输出',
@@ -143,6 +154,17 @@ window.__ModuleLoader__.load({
       creditsPackage: 'Credit package',
       creditsSourcePersonal: 'Credits come from the WorkBuddy personal billing API.',
       creditsSourceEnterprise: 'Credits come from the WorkBuddy enterprise billing API.',
+      benefitsTitle: 'Claimable credits',
+      benefitGift: 'New-user gift',
+      benefitCompensation: 'Compensation credit',
+      benefitPending: 'Unclaimed',
+      benefitClaimed: 'Claimed',
+      benefitInactive: 'Ended',
+      benefitClaim: 'Claim',
+      benefitCredits: '{n} credits',
+      benefitUntil: 'Open until {date}',
+      benefitEnterprise: 'Enterprise accounts have no personal welfare credit.',
+      benefitClaimedOk: 'Claimed — the credits are on the account.',
       secUsage: 'Usage',
       usageInput: 'Input',
       usageOutput: 'Output',
@@ -456,6 +478,15 @@ window.__ModuleLoader__.load({
 .wb-credit-meta{display:flex;gap:10px;flex-wrap:wrap;font-size:11px;line-height:17px;color:var(--dsw-alias-label-tertiary)}
 .wb-credit-count-warn{color:color-mix(in srgb, var(--dsw-alias-state-warn-primary,#f59e0b) 60%, var(--dsw-alias-label-primary))}
 .wb-credit-count-low{color:var(--dsw-alias-state-error-primary,#ec1313)}
+.wb-benefits{display:flex;flex-direction:column;gap:8px;padding-top:12px;border-top:.5px solid var(--dsw-alias-border-l4)}
+.wb-benefit-head{font-size:12px;font-weight:600;line-height:18px;color:var(--dsw-alias-label-secondary)}
+.wb-benefit{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 9px;border:.5px solid var(--dsw-alias-border-l4);border-radius:10px}
+.wb-benefit-main{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;min-width:0}
+.wb-benefit-name{font-size:12.5px;line-height:19px}
+.wb-benefit-credits{font-size:11px;line-height:18px;color:var(--dsw-alias-label-secondary);font-variant-numeric:tabular-nums}
+.wb-benefit-meta{font-size:10.5px;line-height:16px;color:var(--dsw-alias-label-tertiary)}
+.wb-benefit-side{display:flex;align-items:center;gap:6px;flex:none}
+.wb-chip-muted{background:var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.05));color:var(--dsw-alias-label-tertiary)}
 .wb-bar{height:5px;border-radius:999px;background:var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.07));overflow:hidden}
 .wb-bar-fill{height:100%;border-radius:999px;background:var(--dsw-alias-state-business-primary,#4b6bff);transition:width .2s ease}
 .wb-bar-ok{background:var(--dsw-alias-state-success-primary,#22c55e)}
@@ -582,6 +613,9 @@ window.__ModuleLoader__.load({
       const [credits, setCredits] = useState(null)
       const [creditsBusy, setCreditsBusy] = useState(false)
       const [creditsError, setCreditsError] = useState('')
+      const [benefits, setBenefits] = useState(null)
+      const [benefitBusy, setBenefitBusy] = useState('')
+      const [benefitNote, setBenefitNote] = useState('')
       const [open, setOpen] = useState({ models: false })
       const [login, setLogin] = useState(null)
       const [loginRegion, setLoginRegion] = useState('cn')
@@ -645,6 +679,35 @@ window.__ModuleLoader__.load({
         }
       }, [])
 
+      const loadBenefits = useCallback(async () => {
+        try {
+          setBenefits(await call('benefits'))
+        } catch (error) {
+          // An older Host half has no benefits action yet; stay quiet.
+          if (error?.code !== 'UNKNOWN_ACTION') setBenefitNote(error.message)
+          setBenefits(null)
+        }
+      }, [])
+
+      const onClaimBenefit = useCallback(
+        async (kind) => {
+          setBenefitBusy(kind)
+          setBenefitNote('')
+          try {
+            await call('claimBenefit', { kind })
+            setMessage({ kind: 'ok', text: tr('benefitClaimedOk') })
+            setBenefits(await call('benefits'))
+            void loadCredits()
+          } catch (error) {
+            setBenefitNote(error.message)
+            if (error?.code === 'BENEFIT_ALREADY_CLAIMED') void loadBenefits()
+          } finally {
+            setBenefitBusy('')
+          }
+        },
+        [tr, loadCredits, loadBenefits],
+      )
+
       const loadUsage = useCallback(async (action = 'usage', payload) => {
         setUsageBusy(true)
         try {
@@ -687,11 +750,13 @@ window.__ModuleLoader__.load({
         if (!signedIn) {
           setCredits(null)
           setUsage(null)
+          setBenefits(null)
           return
         }
         void loadCredits()
         void loadUsage()
-      }, [signedIn, status?.activeAccountId, loadCredits, loadUsage])
+        void loadBenefits()
+      }, [signedIn, status?.activeAccountId, loadCredits, loadUsage, loadBenefits])
 
       useEffect(() => {
         if (login === null || login.status !== 'pending') return undefined
@@ -1085,6 +1150,63 @@ window.__ModuleLoader__.load({
         )
       })
 
+      const benefitRow = (entry) => {
+        if (entry === null || entry === undefined) return null
+        const label = entry.kind === 'gift' ? tr('benefitGift') : tr('benefitCompensation')
+        const state = entry.pending ? tr('benefitPending') : entry.claimed ? tr('benefitClaimed') : tr('benefitInactive')
+        return h(
+          'div',
+          { className: 'wb-benefit', key: entry.kind },
+          h(
+            'div',
+            { className: 'wb-benefit-main' },
+            h('span', { className: 'wb-benefit-name' }, label),
+            h('span', { className: 'wb-benefit-credits' }, tr('benefitCredits').replace('{n}', String(entry.creditNum))),
+            entry.endTime !== '' && entry.pending
+              ? h('span', { className: 'wb-benefit-meta' }, tr('benefitUntil').replace('{date}', entry.endTime.slice(0, 10)))
+              : null,
+          ),
+          h(
+            'div',
+            { className: 'wb-benefit-side' },
+            h('span', { className: 'wb-chip ' + (entry.pending ? 'wb-chip-warn' : 'wb-chip-muted') }, state),
+            entry.pending
+              ? h(
+                  'button',
+                  {
+                    type: 'button',
+                    className: 'wb-btn wb-btn-sm',
+                    disabled: benefitBusy !== '',
+                    onClick: () => void onClaimBenefit(entry.kind),
+                  },
+                  benefitBusy === entry.kind ? tr('loading') : tr('benefitClaim'),
+                )
+              : null,
+          ),
+        )
+      }
+
+      const benefitsBlock = !signedIn
+        ? null
+        : benefits === null
+          ? null
+          : benefits.supported === false
+            ? h(
+                'div',
+                { className: 'wb-benefits' },
+                h('p', { className: 'wb-hint' }, tr('benefitEnterprise')),
+              )
+            : h(
+                'div',
+                { className: 'wb-benefits' },
+                h('div', { className: 'wb-benefit-head' }, tr('benefitsTitle')),
+                benefitRow(benefits.gift),
+                benefitRow(benefits.compensation),
+                benefitNote !== ''
+                  ? h('p', { className: 'wb-banner wb-banner-error', style: { margin: '2px 0 0' } }, benefitNote)
+                  : null,
+              )
+
       const creditsCard = !signedIn
         ? null
         : h(
@@ -1128,6 +1250,7 @@ window.__ModuleLoader__.load({
             credits !== null && credits.packages.length > 0
               ? h('div', { className: 'wb-credit-list' }, ...creditPackages)
               : null,
+            benefitsBlock,
             credits !== null
               ? h(
                   'p',

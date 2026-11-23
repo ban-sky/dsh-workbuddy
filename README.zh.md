@@ -42,7 +42,7 @@ DSH Agent 循环
 推荐从 Release 安装：
 
 ```sh
-dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.9.3.tgz
+dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.10.0.tgz
 ```
 
 从源码安装：
@@ -71,11 +71,23 @@ dsh plugin --profile web add "$PWD"
 - 点 **切换** 立即把该账号设为当前账号；模型请求、积分查询都只使用当前账号。
 - **重命名** 只改显示名，**移除** 需要点两次确认；移除当前账号会自动切到下一个。
 - 每个账号有独立的设备标识与请求节流，互不阻塞，也不会串用身份。
+- 节流按账号生效：同一账号的请求至少间隔 1.2 秒并叠加 0–400 毫秒随机抖动，最多 2 个并发；收到 HTTP 429 时只暂停该账号（默认 60 秒，或按 `retry-after`），不会连续重试把限流升级成风控。
 - 所有账号保存在 `$DSH_HOME/.workbuddy-credentials.json`（权限 `0600`，原子写入），设备盐值在同目录的 `.device` 文件中；**退出登录** 只移除当前账号。
 
 ## 积分
 
 账号卡片会显示当前账号的点数余额：总量、每个权益包的剩余/总量进度条、周期结束时间与最近到期时间。数据来自 WorkBuddy 计费接口，仅在本机请求；企业账号读取企业额度表，个人账号读取权益包表。读取失败会显示错误，而不是显示 0。
+
+## 福利领取
+
+账号卡片下方会列出该账号还能领的官方福利：
+
+- **新人福利** 与 **补偿福利** 各占一行，显示积分数量与有效期；
+- 只有「活动进行中且尚未领取」时才显示 **领取** 按钮——已领取的活动仍会返回 active，只看这个字段会误判；
+- 点 **领取** 之前会先重新读一次状态：已领取或已过期会直接在本机返回冲突，不会把请求发到上游；
+- 企业账号不显示领取入口（上游会以「已领取」拒绝，展示出来只会误导）。
+
+领取走计费控制台的 `check-gift-claimed`、`claim-gift`、`compensation-status`、`claim-compensation` 四个接口，一次只代表当前账号操作一项福利。
 
 ## 配置
 
@@ -94,7 +106,8 @@ dsh plugin --profile web add "$PWD"
 - **网页登录是唯一的凭据来源**：没有配置 token、环境变量 token、命令行 token 或粘贴框；`$wbEncrypted` 加密串会被直接拒绝。
 - token 文件位于 `$DSH_HOME` 下、权限 `0600`，不会写入日志、插件配置或 HTTP 响应，也不会被打进 npm 包。
 - shim 只监听 `127.0.0.1`，每次启动使用随机 Bearer 密钥；真实 token 只留在 Host 进程内。
-- 出站请求只发往所选 WorkBuddy 网关。
+- 出站请求只发往所选 WorkBuddy 网关；每次请求带独立的 `x-request-id`，便于上游把重试与重复提交区分开。
+- 发送前会去掉**本轮**用户消息开头的对话地址标记（`<acp …>m00123</acp>`），历史消息保持原样；WorkBuddy 用量明细的「请求」列因此显示真实内容，而不是一整列地址。
 
 ## 常见问题
 
@@ -111,7 +124,7 @@ WorkBuddy 的配额、限流错误会作为普通模型错误返回 DSH。
 ## 开发
 
 ```sh
-npm test        # 116 项测试：账号存储、设备标识与节流、积分、用量账本、credentials、OAuth、模型目录、优惠、HTTP 路由、shim、adapter、插件
+npm test        # 132 项测试：账号存储、设备标识与节流、福利领取、积分、用量账本、credentials、OAuth、模型目录、优惠、HTTP 路由、shim、adapter、插件
 npm run verify  # 语法 + manifest + locale/icon 检查
 npm run build   # dist/*.tgz + sha256
 ```
