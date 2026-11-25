@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.11.1 — 2026-11-25
+
+- **Fixed the panel rendering blank when signed in.** The check-in card passed its
+  body as a single element while `Card` spread `children` into the body div, so
+  every signed-in render threw `Spread syntax requires ...iterable[Symbol.iterator]`
+  and React unmounted the whole page. Card bodies now go through an `asChildren`
+  helper that accepts one node, an array, or `null`.
+- **Fixed a second crash path in the benefit rows.** A benefit payload without
+  `endTime` made the row call `.slice` on `undefined`; the expiry line now checks
+  the field is a non-empty string first.
+- **Added client rendering regression tests** (`test/client.test.js`, 3 tests, 159
+  total). They stub the module loader, React hooks, and the settings route, then
+  render the signed-in panel and assert all five cards, the check-in streak, the
+  redeem button, and a signed-out shell. A syntax check cannot catch a render-time
+  spread; this can.
+
 ## 0.11.0 — 2026-11-25
 
 - **Daily check-in.** A new card tracks WorkBuddy's 「连续登录」 streak: how many

@@ -1,6 +1,6 @@
 {
   "name": "@ban-sky/dsh-workbuddy",
-  "version": "0.11.0",
+  "version": "0.11.1",
   "description": "WorkBuddy / CodeBuddy models in DeepSeek Harness: browser sign-in, live model catalog, credit balance, welfare and daily check-in rewards, multi-account isolation, token usage statistics, and a DSH Go panel.",
   "type": "module",
   "engines": {

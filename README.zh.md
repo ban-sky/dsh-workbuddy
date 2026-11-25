@@ -42,7 +42,7 @@ DSH Agent 循环
 推荐从 Release 安装：
 
 ```sh
-dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.11.0.tgz
+dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.11.1.tgz
 ```
 
 从源码安装：
@@ -145,7 +145,7 @@ WorkBuddy 的配额、限流错误会作为普通模型错误返回 DSH。
 ## 开发
 
 ```sh
-npm test        # 156 项测试：账号存储、设备标识与节流、福利领取、每日签到、积分、用量账本、DSH Go 视图、credentials、OAuth、模型目录、优惠、HTTP 路由、shim、adapter、插件
+npm test        # 159 项测试：账号存储、设备标识与节流、福利领取、每日签到、积分、用量账本、DSH Go 视图、credentials、OAuth、模型目录、优惠、HTTP 路由、shim、adapter、插件
 npm run verify  # 语法 + manifest + locale/icon 检查
 npm run build   # dist/*.tgz + sha256
 ```

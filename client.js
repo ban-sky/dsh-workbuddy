@@ -608,6 +608,20 @@ window.__ModuleLoader__.load({
     }
 
     /**
+     * Turn a card body into a list of children.
+     *
+     * Cards accept either an array of nodes or one node; spreading a lone node
+     * throws at render time, so normalise here instead of at every call site.
+     *
+     * @param {unknown} value - Card body.
+     * @returns {Array<any>} Children to spread.
+     */
+    function asChildren(value) {
+      if (value === null || value === undefined || value === false) return []
+      return Array.isArray(value) ? value : [value]
+    }
+
+    /**
      * One card in the panel grid. Unless `fixed`, the whole title area toggles it.
      *
      * @param {{ title: string, subtitle?: string, icon?: object, wide?: boolean, fixed?: boolean, open?: boolean, onToggle?: Function, actions?: Array<any>, children?: Array<any> }} props - Props.
@@ -644,7 +658,7 @@ window.__ModuleLoader__.load({
               ),
           actions !== undefined && actions.length > 0 ? h('div', { className: 'wb-card-actions' }, ...actions) : null,
         ),
-        expanded ? h('div', { className: 'wb-card-body' }, ...(children ?? [])) : null,
+        expanded ? h('div', { className: 'wb-card-body' }, ...asChildren(children)) : null,
       )
     }
 
@@ -1249,7 +1263,7 @@ window.__ModuleLoader__.load({
             { className: 'wb-benefit-main' },
             h('span', { className: 'wb-benefit-name' }, label),
             h('span', { className: 'wb-benefit-credits' }, tr('benefitCredits').replace('{n}', String(entry.creditNum))),
-            entry.endTime !== '' && entry.pending
+            typeof entry.endTime === 'string' && entry.endTime !== '' && entry.pending
               ? h('span', { className: 'wb-benefit-meta' }, tr('benefitUntil').replace('{date}', entry.endTime.slice(0, 10)))
               : null,
           ),

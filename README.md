@@ -42,7 +42,7 @@ Credits come straight from the `usage.credit` field WorkBuddy returns with every
 From a release asset (recommended):
 
 ```sh
-dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.11.0.tgz
+dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.11.1.tgz
 ```
 
 From source:
@@ -145,7 +145,7 @@ Quota and rate-limit errors from WorkBuddy are returned to DSH as normal model e
 ## Development
 
 ```sh
-npm test        # 156 tests: account store, device identity and pacing, welfare benefits, daily streak, credits, usage ledger, DSH Go view, credentials, OAuth, catalog, promotions, HTTP route, shim, adapter, plugin
+npm test        # 159 tests: account store, device identity and pacing, welfare benefits, daily streak, credits, usage ledger, DSH Go view, credentials, OAuth, catalog, promotions, HTTP route, shim, adapter, plugin
 npm run verify  # syntax + manifest + locale/icon checks
 npm run build   # dist/*.tgz + sha256
 ```
