@@ -42,7 +42,7 @@ DSH Agent 循环
 推荐从 Release 安装：
 
 ```sh
-dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.10.0.tgz
+dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.11.0.tgz
 ```
 
 从源码安装：
@@ -89,6 +89,27 @@ dsh plugin --profile web add "$PWD"
 
 领取走计费控制台的 `check-gift-claimed`、`claim-gift`、`compensation-status`、`claim-compensation` 四个接口，一次只代表当前账号操作一项福利。
 
+## 每日签到
+
+「连续登录」是 WorkBuddy 官方活动：**完成一次对话**才会把当天记为已签到，没有单独的签到请求。
+
+- 「每日签到」卡片显示连续天数、今日是否已计入、下一档还差几天、补登卡数量；
+- 7 / 14 / 28 天三档分别可兑换积分、能量、补登卡与抽奖次数，只有「可兑换」时才出现按钮；
+- 兑换前会先重读活动状态，未达标或已兑换直接在本机返回冲突，不会把请求发到上游；
+- 兑换带一次性 `client_token`，重复点击不会重复消耗次数；
+- 日期按活动时区（Asia/Shanghai）计算，避免本机时区跨天算错。
+
+数据来自 `activity/growth/{streak,heatmap,redeem}`，只在本机请求。国际站账号没有该活动，卡片会说明不支持。
+
+## DSH Go
+
+装了 DSH Go（手机 App 的桥）时，插件会自动多出两处入口，无需额外配置：
+
+- 「插件」页里的 **WorkBuddy** 面板：账号、积分、本机用量、连续签到四张卡片，外加刷新 / 领福利 / 兑换三档按钮；
+- 输入框上方的状态胶囊显示当前账号可用积分（如 `WorkBuddy 748 分`），点开即进入上面的面板。
+
+桥接服务 `dshGo` 不存在时这段代码不会运行，桌面端界面不受影响。
+
 ## 配置
 
 通常无需配置。如需覆盖，在 profile 的 `cordis.patch.yml` 的 `workbuddy` 行中设置：
@@ -124,7 +145,7 @@ WorkBuddy 的配额、限流错误会作为普通模型错误返回 DSH。
 ## 开发
 
 ```sh
-npm test        # 132 项测试：账号存储、设备标识与节流、福利领取、积分、用量账本、credentials、OAuth、模型目录、优惠、HTTP 路由、shim、adapter、插件
+npm test        # 156 项测试：账号存储、设备标识与节流、福利领取、每日签到、积分、用量账本、DSH Go 视图、credentials、OAuth、模型目录、优惠、HTTP 路由、shim、adapter、插件
 npm run verify  # 语法 + manifest + locale/icon 检查
 npm run build   # dist/*.tgz + sha256
 ```

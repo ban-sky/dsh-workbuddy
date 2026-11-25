@@ -41,6 +41,8 @@ const sources = [
   'lib/catalog-source.js',
   'lib/credentials.js',
   'lib/credits.js',
+  'lib/dsh-go.js',
+  'lib/growth.js',
   'lib/http.js',
   'lib/jwt.js',
   'lib/oauth.js',

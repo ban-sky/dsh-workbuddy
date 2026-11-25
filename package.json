@@ -1,10 +1,11 @@
 {
   "name": "@ban-sky/dsh-workbuddy",
-  "version": "0.10.0",
-  "description": "WorkBuddy / CodeBuddy models in DeepSeek Harness: browser sign-in, live model catalog, credit balance, multi-account isolation, and per-account token usage statistics.",
+  "version": "0.11.0",
+  "description": "WorkBuddy / CodeBuddy models in DeepSeek Harness: browser sign-in, live model catalog, credit balance, welfare and daily check-in rewards, multi-account isolation, token usage statistics, and a DSH Go panel.",
   "type": "module",
   "engines": {
-    "node": ">=22"
+    "node": ">=22",
+    "dsh": ">=0.2.1-rc.5 <0.3.0-0"
   },
   "icon": "./icon.svg",
   "main": "index.js",
@@ -42,7 +43,7 @@
     "test": "node --test test/*.test.js",
     "test:watch": "node --test --watch test/*.test.js",
     "build": "node scripts/build.mjs",
-    "verify": "node --check index.js && node --check client.js && node --check lib/accounts.js && node --check lib/benefits.js && node --check lib/catalog.js && node --check lib/catalog-source.js && node --check lib/credentials.js && node --check lib/credits.js && node --check lib/http.js && node --check lib/jwt.js && node --check lib/oauth.js && node --check lib/promotions.js && node --check lib/shim.js && node --check lib/adapter.js && node --check lib/token-store.js && node --check lib/usage.js"
+    "verify": "node --check index.js && node --check client.js && node --check lib/accounts.js && node --check lib/benefits.js && node --check lib/catalog.js && node --check lib/catalog-source.js && node --check lib/credentials.js && node --check lib/credits.js && node --check lib/http.js && node --check lib/jwt.js && node --check lib/oauth.js && node --check lib/promotions.js && node --check lib/shim.js && node --check lib/adapter.js && node --check lib/token-store.js && node --check lib/usage.js && node --check lib/growth.js && node --check lib/dsh-go.js"
   },
   "dsh": {
     "bundle": {
@@ -60,13 +61,45 @@
       ]
     }
   },
+  "dshGo": {
+    "v": 1,
+    "title": {
+      "zh": "WorkBuddy",
+      "en": "WorkBuddy"
+    },
+    "icon": "chart",
+    "contributes": {
+      "composer.strip": [
+        {
+          "id": "workbuddy-credits",
+          "icon": "chart",
+          "panel": "workbuddy"
+        }
+      ],
+      "panels": [
+        {
+          "id": "workbuddy",
+          "title": {
+            "zh": "WorkBuddy 用量",
+            "en": "WorkBuddy usage"
+          },
+          "icon": "chart",
+          "placement": [
+            "session.tab",
+            "features",
+            "chat.panel"
+          ]
+        }
+      ]
+    }
+  },
   "dependencies": {
     "@earendil-works/pi-ai": "1.4.0"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.5",
-    "@deepseek-ai/dsh-llm": "0.2.1-rc.5",
-    "@deepseek-ai/dsh-llm-pi-ai": "0.2.1-rc.5",
+    "@deepseek-ai/dsh-llm": "^0.2.1-rc.5",
+    "@deepseek-ai/dsh-llm-pi-ai": "^0.2.1-rc.5",
     "@deepseek-ai/schemastery": "^3.18.5"
   },
   "devDependencies": {

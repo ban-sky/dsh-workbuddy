@@ -16,17 +16,22 @@
  */
 
 import z from '@deepseek-ai/schemastery'
+import { randomUUID } from 'node:crypto'
 import { resolveImageAttachmentAccess } from '@deepseek-ai/dsh-llm'
 import { WORKBUDDY_MODELS } from './lib/catalog.js'
 import { fetchRemoteCatalog } from './lib/catalog-source.js'
 import { WorkBuddyCredentials } from './lib/credentials.js'
 import { createWorkBuddyAdapter } from './lib/adapter.js'
 import { startShim } from './lib/shim.js'
-import { createWorkBuddyHandler, ROUTE_PATH } from './lib/http.js'
+import { createWorkBuddyHandler, growthPayload, ROUTE_PATH, todayInActivityZone } from './lib/http.js'
 import { WorkBuddyOAuth } from './lib/oauth.js'
 import { defaultTokenStorePath, TokenStore } from './lib/token-store.js'
 import { loadDeviceSalt, RequestPacer } from './lib/accounts.js'
 import { defaultUsagePath, UsageLedger } from './lib/usage.js'
+import { billingBaseOf, fetchCredits } from './lib/credits.js'
+import { fetchBenefits, claimBenefit } from './lib/benefits.js'
+import { fetchGrowth, redeemGrowth } from './lib/growth.js'
+import { GO_PANEL_ID, GO_STRIP_ID, goData, goStrip, goView } from './lib/dsh-go.js'
 
 /** Cordis services this plugin needs before it activates. */
 export const inject = ['llm']
@@ -241,4 +246,196 @@ export async function apply(ctx, config) {
     return () => registration()
   }, 'dsh-workbuddy: model provider')
   ctx.effect(() => () => shim.close(), 'dsh-workbuddy: loopback shim')
+
+  /**
+   * Read every number the DSH Go panel shows, for the active account.
+   *
+   * Credits and the activity streak are independent services, so one failing
+   * must not blank the whole panel; the ledger view and credential status are
+   * local and always available.
+   *
+   * @returns {Promise<object>} Snapshot for {@link goData}.
+   */
+  async function readGoSnapshot() {
+    const status = credentials.status()
+    const accountId = status.activeAccountId ?? ''
+    const view = usage.view(accountId)
+    if (!status.signedIn) return { status, credits: null, usage: view, growth: { supported: false, reason: 'SIGNED_OUT' } }
+    const headers = await credentials.headers()
+    const domain = status.domain ?? ''
+    const base = billingBaseOf(domain)
+    const [credits, growth] = await Promise.all([
+      fetchCredits({ headers, domain, enterpriseId: status.enterpriseId ?? '', fetchImpl: globalThis.fetch }).catch(() => null),
+      fetchGrowth({
+        headers,
+        base,
+        domain,
+        today: todayInActivityZone(),
+        fetchImpl: globalThis.fetch,
+      }).catch(() => ({ supported: false, reason: 'FAILED' })),
+    ])
+    return { status, credits, usage: view, growth }
+  }
+
+  // DSH Go (phone app) surface. The service only exists when the app's bridge
+  // is installed, so a desktop install simply never runs this block.
+  ctx.inject(['dshGo'], (go) => {
+    // A host without the DSH Go bridge never provides the service; some test
+    // harnesses hand the callback the bare context, so check before using it.
+    const dshGo = go?.dshGo ?? go?.get?.('dshGo')
+    if (dshGo === undefined || dshGo === null) return
+    go.effect(() => {
+      let snapshot
+      let loading
+      const load = async () => {
+        loading ??= readGoSnapshot()
+          .then((next) => {
+            snapshot = next
+            return next
+          })
+          .finally(() => {
+            loading = undefined
+          })
+        return loading
+      }
+      const current = async () => snapshot ?? (await load())
+
+      const offPanel = dshGo.panel(GO_PANEL_ID, {
+        view: (scope, caps) => goView(caps?.locale),
+        data: (scope, emit, caps) => {
+          let stopped = false
+          const push = async () => {
+            try {
+              const next = await current()
+              if (!stopped) emit(goData(next, caps?.locale))
+            } catch (error) {
+              ctx.logger.warn(`workbuddy: dsh-go 面板读取失败：${error instanceof Error ? error.message : String(error)}`)
+            }
+          }
+          void push()
+          const timer = setInterval(() => {
+            void load().then(push)
+          }, 120_000)
+          timer.unref?.()
+          return () => {
+            stopped = true
+            clearInterval(timer)
+          }
+        },
+        actions: {
+          refresh: (scope, event) => ({
+            pending: { label: '刷新', timeoutMs: 20_000 },
+            result: async (signal) => {
+              if (signal?.aborted) return []
+              await load()
+              return [{ type: 'patch', id: GO_PANEL_ID, data: goData(snapshot ?? {}, event?.locale) }]
+            },
+          }),
+          'claim-gift': (scope, event) => ({
+            pending: { label: '领取', timeoutMs: 20_000 },
+            result: async (signal) => {
+              if (signal?.aborted) return []
+              try {
+                const headers = await credentials.headers()
+                const status = credentials.status()
+                const state = await fetchBenefits({
+                  headers,
+                  domain: status.domain ?? '',
+                  enterpriseId: status.enterpriseId ?? '',
+                  fetchImpl: globalThis.fetch,
+                })
+                if (!state.supported || state.gift === null) return [{ type: 'toast', text: '没有可领取的福利' }]
+                if (state.gift.claimed) return [{ type: 'toast', text: '该福利已经领取过了' }]
+                if (!state.gift.active) return [{ type: 'toast', text: '这项福利当前不在可领取时间内' }]
+                const receipt = await claimBenefit({
+                  headers,
+                  domain: status.domain ?? '',
+                  kind: 'gift',
+                  enterpriseId: '',
+                  fetchImpl: globalThis.fetch,
+                })
+                await load()
+                return [
+                  { type: 'toast', text: `已领取 ${receipt.creditNum ?? state.gift.creditNum} 积分` },
+                  { type: 'patch', id: GO_PANEL_ID, data: goData(snapshot ?? {}, event?.locale) },
+                ]
+              } catch (error) {
+                return [{ type: 'toast', text: error instanceof Error ? error.message.slice(0, 40) : '领取失败' }]
+              }
+            },
+          }),
+          ...Object.fromEntries(
+            ['7d', '14d', '28d'].map((tier) => [
+              `redeem-${tier}`,
+              (scope, event) => ({
+                pending: { label: '兑换', timeoutMs: 20_000 },
+                result: async (signal) => {
+                  if (signal?.aborted) return []
+                  try {
+                    const headers = await credentials.headers()
+                    const status = credentials.status()
+                    const domain = status.domain ?? ''
+                    const base = billingBaseOf(domain)
+                    const state = await fetchGrowth({
+                      headers,
+                      base,
+                      domain,
+                      today: todayInActivityZone(),
+                      fetchImpl: globalThis.fetch,
+                    })
+                    const entry = state.tiers?.find((item) => item.tier === tier)
+                    if (entry === undefined || entry.state !== 'available') {
+                      await load()
+                      return [{ type: 'toast', text: '这一档还不能兑换' }]
+                    }
+                    const receipt = await redeemGrowth({
+                      headers,
+                      base,
+                      domain,
+                      tier,
+                      clientToken: randomUUID(),
+                      fetchImpl: globalThis.fetch,
+                    })
+                    await load()
+                    return [
+                      { type: 'toast', text: `已兑换 ${receipt.credit > 0 ? `${receipt.credit} 积分` : tier}` },
+                      { type: 'patch', id: GO_PANEL_ID, data: goData(snapshot ?? {}, event?.locale) },
+                    ]
+                  } catch (error) {
+                    return [{ type: 'toast', text: error instanceof Error ? error.message.slice(0, 40) : '兑换失败' }]
+                  }
+                },
+              }),
+            ]),
+          ),
+        },
+      })
+
+      const offStrip = dshGo.strip(GO_STRIP_ID, (scope, emit, caps) => {
+        let stopped = false
+        const push = async () => {
+          try {
+            const next = await current()
+            if (!stopped) emit(goStrip(next, caps?.locale))
+          } catch {
+            // A strip is decoration: never surface a read failure there.
+          }
+        }
+        void push()
+        const timer = setInterval(() => {
+          void load().then(push)
+        }, 120_000)
+        timer.unref?.()
+        return () => {
+          stopped = true
+          clearInterval(timer)
+        }
+      })
+
+      return () => {
+        offPanel?.()
+        offStrip?.()
+      }
+    }, 'dsh-workbuddy: dsh-go panel')
+  })
 }

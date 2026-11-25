@@ -247,3 +247,17 @@ test('createUsageTap ignores non-data lines and malformed JSON', () => {
   tap.push('data: \n')
   assert.equal(seen.length, 0)
 })
+
+test('a second ledger sees what the first one flushed', () => {
+  const directory = mkdtempSync(join(tmpdir(), 'dsh-workbuddy-usage-'))
+  const path = join(directory, '.workbuddy-usage.json')
+  const writer = new UsageLedger({ path })
+  const reader = new UsageLedger({ path })
+  assert.equal(reader.view('a').totals?.requests ?? 0, 0)
+
+  writer.record({ accountId: 'a', model: 'glm-5.3', usage: { prompt_tokens: 5, completion_tokens: 5, total_tokens: 10, credit: 0.02 } })
+  writer.flush()
+
+  assert.equal(reader.view('a').totals.requests, 1)
+  assert.equal(reader.view('a').totals.totalTokens, 10)
+})

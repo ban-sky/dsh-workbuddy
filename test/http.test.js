@@ -538,3 +538,73 @@ test('claimBenefit needs a kind', async () => {
   assert.equal(result.status, 400)
   assert.equal(result.body.error.code, 'MISSING_BENEFIT_KIND')
 })
+
+test('growth reports the streak, today, and tiers without leaking the token', async () => {
+  const fetchImpl = async (url) => {
+    const path = new URL(String(url)).pathname
+    if (path.endsWith('/streak')) {
+      return Response.json({
+        code: 0,
+        data: {
+          streak: { days: 1, next_tier: '7d', next_tier_remaining: 6, makeup_dates: [] },
+          makeup_cards: { balance: 0, max: 4 },
+          redemption_status: {
+            tier_7d_status: 'locked',
+            tier_14d_status: 'locked',
+            tier_28d_status: 'locked',
+            tiers: [
+              { tier: '7d', days: 7, credit: 0, energy: 2, cards: 1, chances: 1 },
+              { tier: '14d', days: 14, credit: 50, energy: 3, cards: 1, chances: 1 },
+              { tier: '28d', days: 28, credit: 150, energy: 5, cards: 1, chances: 1 },
+            ],
+          },
+          timezone: 'Asia/Shanghai',
+        },
+      })
+    }
+    return Response.json({ code: 0, data: { cells: [{ date: '2026-01-01', score: 1 }] } })
+  }
+  const { handle } = harness({ fetchImpl })
+  const result = await post(handle, { action: 'growth' })
+  assert.equal(result.status, 200)
+  assert.equal(result.body.ok, true)
+  assert.equal(result.body.value.supported, true)
+  assert.equal(result.body.value.streak.days, 1)
+  assert.equal(result.body.value.tiers.length, 3)
+  assert.equal(result.body.value.tiers[1].state, 'locked')
+  assert.ok(result.body.value.today.counted === true || result.body.value.today.counted === false || result.body.value.today.counted === null)
+  assert.equal(result.text.includes('secret-token'), false)
+})
+
+test('redeemGrowth refuses a locked tier without a write', async () => {
+  const calls = []
+  const fetchImpl = async (url) => {
+    const path = new URL(String(url)).pathname
+    calls.push(path)
+    if (path.endsWith('/redeem')) return Response.json({ code: 0, data: {} })
+    if (path.endsWith('/heatmap')) return Response.json({ code: 0, data: { cells: [] } })
+    return Response.json({
+      code: 0,
+      data: {
+        streak: { days: 1, next_tier: '7d', next_tier_remaining: 6 },
+        makeup_cards: { balance: 0, max: 4 },
+        redemption_status: {
+          tier_7d_status: 'locked',
+          tiers: [{ tier: '7d', days: 7, credit: 0, energy: 2, cards: 1, chances: 1 }],
+        },
+      },
+    })
+  }
+  const { handle } = harness({ fetchImpl })
+  const result = await post(handle, { action: 'redeemGrowth', tier: '7d' })
+  assert.equal(result.status, 409)
+  assert.equal(result.body.error.code, 'GROWTH_LOCKED')
+  assert.equal(calls.some((path) => path.endsWith('/redeem')), false)
+})
+
+test('redeemGrowth needs a tier', async () => {
+  const { handle } = harness()
+  const result = await post(handle, { action: 'redeemGrowth' })
+  assert.equal(result.status, 400)
+  assert.equal(result.body.error.code, 'MISSING_GROWTH_TIER')
+})

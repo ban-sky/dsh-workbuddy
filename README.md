@@ -42,7 +42,7 @@ Credits come straight from the `usage.credit` field WorkBuddy returns with every
 From a release asset (recommended):
 
 ```sh
-dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.10.0.tgz
+dsh plugin --profile web add ./ban-sky-dsh-workbuddy-0.11.0.tgz
 ```
 
 From source:
@@ -89,6 +89,27 @@ Under the account card the panel lists the official welfare credits this account
 
 Claiming uses the console's `check-gift-claimed`, `claim-gift`, `compensation-status` and `claim-compensation` endpoints, one activity for one account per click.
 
+## Daily check-in
+
+"Daily streak" is an official WorkBuddy activity: a day only counts once **a conversation completes**, so there is no check-in request to send.
+
+- The **Daily check-in** card shows the streak, whether today counted, how many days remain to the next tier, and how many make-up cards you hold;
+- The 7 / 14 / 28-day tiers pay credits, energy, make-up cards, and draw chances; the button appears only when the tier is claimable;
+- Status is re-read before redeeming, so a locked or already-redeemed tier is rejected locally without calling the upstream;
+- Each redeem carries a one-shot `client_token`, so a double click cannot spend two chances;
+- Dates use the activity timezone (Asia/Shanghai) so a local midnight cannot shift the day.
+
+The card reads `activity/growth/{streak,heatmap,redeem}` from this machine only. International accounts do not have the activity and the card says so.
+
+## DSH Go
+
+With DSH Go (the phone app's bridge) installed, the plugin adds two entries automatically — no extra configuration:
+
+- A **WorkBuddy** panel under the app's plugins page: four cards for the account, credits, local usage, and the streak, plus refresh / claim-welfare / redeem buttons;
+- A composer status pill showing the signed-in account's credits (e.g. `WorkBuddy 748 cr`); tapping it opens the panel.
+
+The `dshGo` service is absent on desktop-only hosts, so the block never runs and the web panel is unaffected.
+
 ## Configuration
 
 The plugin usually needs no configuration. Optional keys, set on the `workbuddy` row of the profile's `cordis.patch.yml`:
@@ -124,7 +145,7 @@ Quota and rate-limit errors from WorkBuddy are returned to DSH as normal model e
 ## Development
 
 ```sh
-npm test        # 132 tests: account store, device identity and pacing, welfare benefits, credits, usage ledger, credentials, OAuth, catalog, promotions, HTTP route, shim, adapter, plugin
+npm test        # 156 tests: account store, device identity and pacing, welfare benefits, daily streak, credits, usage ledger, DSH Go view, credentials, OAuth, catalog, promotions, HTTP route, shim, adapter, plugin
 npm run verify  # syntax + manifest + locale/icon checks
 npm run build   # dist/*.tgz + sha256
 ```

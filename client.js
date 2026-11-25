@@ -53,6 +53,23 @@ window.__ModuleLoader__.load({
       benefitUntil: '有效期至 {date}',
       benefitEnterprise: '企业账号没有个人福利可以领取。',
       benefitClaimedOk: '福利已领取，积分已到账。',
+      secCheckin: '每日签到',
+      checkinToday: '今日',
+      checkinCounted: '已计入',
+      checkinNotCounted: '未计入',
+      checkinUnknown: '未知',
+      checkinDays: '连续登录',
+      checkinDaysUnit: '天',
+      checkinNext: '下一档',
+      checkinTopTier: '已达最高档',
+      checkinRemaining: '还差 {n} 天',
+      checkinMakeup: '补登卡',
+      checkinTierLocked: '未达成',
+      checkinTierAvailable: '可兑换',
+      checkinTierRedeemed: '已兑换',
+      checkinRedeem: '兑换',
+      checkinRedeemedOk: '已兑换，奖励已到账。',
+      checkinHint: '完成一次对话即计入当天，连续 7 / 14 / 28 天可兑换积分。',
       secUsage: '用量统计',
       usageInput: '输入',
       usageOutput: '输出',
@@ -165,6 +182,23 @@ window.__ModuleLoader__.load({
       benefitUntil: 'Open until {date}',
       benefitEnterprise: 'Enterprise accounts have no personal welfare credit.',
       benefitClaimedOk: 'Claimed — the credits are on the account.',
+      secCheckin: 'Daily check-in',
+      checkinToday: 'Today',
+      checkinCounted: 'Counted',
+      checkinNotCounted: 'Not counted',
+      checkinUnknown: 'Unknown',
+      checkinDays: 'Streak',
+      checkinDaysUnit: 'days',
+      checkinNext: 'Next tier',
+      checkinTopTier: 'Top tier reached',
+      checkinRemaining: '{n} days to go',
+      checkinMakeup: 'Make-up cards',
+      checkinTierLocked: 'Locked',
+      checkinTierAvailable: 'Claimable',
+      checkinTierRedeemed: 'Claimed',
+      checkinRedeem: 'Redeem',
+      checkinRedeemedOk: 'Redeemed — the reward is on the account.',
+      checkinHint: 'One completed conversation counts the day; 7 / 14 / 28 days unlock credits.',
       secUsage: 'Usage',
       usageInput: 'Input',
       usageOutput: 'Output',
@@ -487,6 +521,23 @@ window.__ModuleLoader__.load({
 .wb-benefit-meta{font-size:10.5px;line-height:16px;color:var(--dsw-alias-label-tertiary)}
 .wb-benefit-side{display:flex;align-items:center;gap:6px;flex:none}
 .wb-chip-muted{background:var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.05));color:var(--dsw-alias-label-tertiary)}
+.wb-chip-ok{background:color-mix(in srgb, var(--dsw-alias-state-success-primary,#22c55e) 14%, transparent);color:color-mix(in srgb, var(--dsw-alias-state-success-primary,#22c55e) 60%, var(--dsw-alias-label-primary))}
+.wb-card-icon-streak{background:color-mix(in srgb, var(--dsw-alias-state-warn-primary,#f59e0b) 16%, transparent);color:color-mix(in srgb, var(--dsw-alias-state-warn-primary,#f59e0b) 60%, var(--dsw-alias-label-primary))}
+.wb-checkin{display:flex;flex-direction:column;gap:10px}
+.wb-checkin-head{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.wb-streak{display:flex;align-items:baseline;gap:5px;flex:none}
+.wb-streak-value{font-size:28px;font-weight:600;line-height:34px;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.wb-streak-label{font-size:12px;line-height:18px;color:var(--dsw-alias-label-tertiary)}
+.wb-checkin-meta{display:flex;flex-direction:column;gap:3px;min-width:0}
+.wb-checkin-label{font-size:12px;line-height:17px;font-weight:600;color:var(--dsw-alias-label-secondary)}
+.wb-checkin-sub{font-size:11px;line-height:16px;color:var(--dsw-alias-label-tertiary);font-variant-numeric:tabular-nums}
+.wb-tier-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.wb-tier{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:7px 10px;border:.5px solid var(--dsw-alias-border-l4);border-radius:10px}
+.wb-tier-available{border-color:color-mix(in srgb, var(--dsw-alias-state-success-primary,#22c55e) 45%, var(--dsw-alias-border-l4))}
+.wb-tier-main{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;min-width:0}
+.wb-tier-name{font-size:12.5px;line-height:19px;font-weight:600}
+.wb-tier-reward{font-size:11px;line-height:18px;color:var(--dsw-alias-label-secondary);font-variant-numeric:tabular-nums}
+.wb-tier-side{display:flex;align-items:center;gap:6px;flex:none}
 .wb-bar{height:5px;border-radius:999px;background:var(--dsw-alias-interactive-bg-hover,rgba(0,0,0,.07));overflow:hidden}
 .wb-bar-fill{height:100%;border-radius:999px;background:var(--dsw-alias-state-business-primary,#4b6bff);transition:width .2s ease}
 .wb-bar-ok{background:var(--dsw-alias-state-success-primary,#22c55e)}
@@ -616,6 +667,9 @@ window.__ModuleLoader__.load({
       const [benefits, setBenefits] = useState(null)
       const [benefitBusy, setBenefitBusy] = useState('')
       const [benefitNote, setBenefitNote] = useState('')
+      const [checkin, setCheckin] = useState(null)
+      const [checkinBusy, setCheckinBusy] = useState('')
+      const [checkinNote, setCheckinNote] = useState('')
       const [open, setOpen] = useState({ models: false })
       const [login, setLogin] = useState(null)
       const [loginRegion, setLoginRegion] = useState('cn')
@@ -689,6 +743,37 @@ window.__ModuleLoader__.load({
         }
       }, [])
 
+      const loadCheckin = useCallback(async () => {
+        try {
+          setCheckin(await call('growth'))
+          setCheckinNote('')
+        } catch (error) {
+          // An older Host half has no activity actions yet; stay quiet.
+          if (error?.code !== 'UNKNOWN_ACTION') setCheckinNote(error.message)
+          setCheckin(null)
+        }
+      }, [])
+
+      const onRedeemTier = useCallback(
+        async (tier) => {
+          setCheckinBusy(tier)
+          setCheckinNote('')
+          try {
+            const receipt = await call('redeemGrowth', { tier })
+            setMessage({ kind: 'ok', text: tr('checkinRedeemedOk') })
+            if (receipt?.growth != null) setCheckin(receipt.growth)
+            else void loadCheckin()
+            void loadCredits()
+          } catch (error) {
+            setCheckinNote(error.message)
+            if (error?.code === 'GROWTH_ALREADY_REDEEMED') void loadCheckin()
+          } finally {
+            setCheckinBusy('')
+          }
+        },
+        [tr, loadCredits, loadCheckin],
+      )
+
       const onClaimBenefit = useCallback(
         async (kind) => {
           setBenefitBusy(kind)
@@ -751,12 +836,14 @@ window.__ModuleLoader__.load({
           setCredits(null)
           setUsage(null)
           setBenefits(null)
+          setCheckin(null)
           return
         }
         void loadCredits()
         void loadUsage()
         void loadBenefits()
-      }, [signedIn, status?.activeAccountId, loadCredits, loadUsage, loadBenefits])
+        void loadCheckin()
+      }, [signedIn, status?.activeAccountId, loadCredits, loadUsage, loadBenefits, loadCheckin])
 
       useEffect(() => {
         if (login === null || login.status !== 'pending') return undefined
@@ -1207,6 +1294,118 @@ window.__ModuleLoader__.load({
                   : null,
               )
 
+      const tierStateText = (state) =>
+        state === 'available' ? tr('checkinTierAvailable') : state === 'redeemed' ? tr('checkinTierRedeemed') : tr('checkinTierLocked')
+
+      const tierRewardText = (entry) => {
+        const parts = []
+        if (entry.credit > 0) parts.push(tr('benefitCredits').replace('{n}', String(entry.credit)))
+        if (entry.cards > 0) parts.push(tr('checkinMakeup') + ' ×' + String(entry.cards))
+        return parts.join(' · ')
+      }
+
+      const checkinBody = !signedIn
+        ? null
+        : checkin === null
+          ? h('p', { className: 'wb-hint' }, checkinNote !== '' ? checkinNote : tr('checkinHint'))
+          : checkin.supported !== true
+            ? h('p', { className: 'wb-hint' }, tr('checkinHint'))
+            : h(
+                'div',
+                { className: 'wb-checkin' },
+                h(
+                  'div',
+                  { className: 'wb-checkin-head' },
+                  h(
+                    'div',
+                    { className: 'wb-streak' },
+                    h('span', { className: 'wb-streak-value' }, String(checkin.streak.days)),
+                    h('span', { className: 'wb-streak-label' }, tr('checkinDaysUnit')),
+                  ),
+                  h(
+                    'div',
+                    { className: 'wb-checkin-meta' },
+                    h('span', { className: 'wb-checkin-label' }, tr('checkinDays')),
+                    h(
+                      'span',
+                      {
+                        className:
+                          'wb-chip ' +
+                          (checkin.today.counted === true ? 'wb-chip-ok' : checkin.today.counted === false ? 'wb-chip-muted' : 'wb-chip-warn'),
+                      },
+                      tr('checkinToday') +
+                        ' ' +
+                        (checkin.today.counted === true
+                          ? tr('checkinCounted')
+                          : checkin.today.counted === false
+                            ? tr('checkinNotCounted')
+                            : tr('checkinUnknown')),
+                    ),
+                    h(
+                      'span',
+                      { className: 'wb-checkin-sub' },
+                      checkin.streak.nextTier === ''
+                        ? tr('checkinTopTier')
+                        : tr('checkinNext') +
+                            ' ' +
+                            checkin.streak.nextTier +
+                            ' · ' +
+                            tr('checkinRemaining').replace('{n}', String(checkin.streak.nextTierRemaining)),
+                    ),
+                    h(
+                      'span',
+                      { className: 'wb-checkin-sub' },
+                      tr('checkinMakeup') + ' ' + String(checkin.cards.balance) + ' / ' + String(checkin.cards.max),
+                    ),
+                  ),
+                ),
+                h(
+                  'ul',
+                  { className: 'wb-tier-list' },
+                  checkin.tiers.map((entry) =>
+                    h(
+                      'li',
+                      { className: 'wb-tier wb-tier-' + entry.state, key: entry.tier },
+                      h(
+                        'div',
+                        { className: 'wb-tier-main' },
+                        h('span', { className: 'wb-tier-name' }, String(entry.days) + ' ' + tr('checkinDaysUnit')),
+                        h('span', { className: 'wb-tier-reward' }, tierRewardText(entry)),
+                      ),
+                      h(
+                        'div',
+                        { className: 'wb-tier-side' },
+                        h(
+                          'span',
+                          {
+                            className:
+                              'wb-chip ' +
+                              (entry.state === 'available' ? 'wb-chip-ok' : entry.state === 'redeemed' ? 'wb-chip-muted' : 'wb-chip-warn'),
+                          },
+                          tierStateText(entry.state),
+                        ),
+                        entry.state === 'available'
+                          ? h(
+                              'button',
+                              {
+                                type: 'button',
+                                className: 'wb-btn wb-btn-sm',
+                                disabled: checkinBusy !== '',
+                                onClick: () => void onRedeemTier(entry.tier),
+                              },
+                              checkinBusy === entry.tier ? tr('loading') : tr('checkinRedeem'),
+                            )
+                          : null,
+                      ),
+                    ),
+                  ),
+                ),
+                h('p', { className: 'wb-hint' }, tr('checkinHint')),
+                checkinNote !== ''
+                  ? h('p', { className: 'wb-banner wb-banner-error', style: { margin: '2px 0 0' } }, checkinNote)
+                  : null,
+              )
+
       const creditsCard = !signedIn
         ? null
         : h(
@@ -1616,6 +1815,7 @@ window.__ModuleLoader__.load({
                       void loadCatalog()
                       void loadCredits()
                       void loadUsage()
+                      void loadCheckin()
                     },
                   },
                   tr('refresh'),
@@ -1676,6 +1876,31 @@ window.__ModuleLoader__.load({
                   ),
                 ],
                 children: modelsBody,
+              }),
+              Card({
+                title: tr('secCheckin'),
+                icon: { tone: 'streak', node: () => CardIcon('streak', 15) },
+                subtitle:
+                  checkin !== null && checkin.supported === true
+                    ? String(checkin.streak.days) + ' ' + tr('checkinDaysUnit')
+                    : undefined,
+                wide: true,
+                fixed: true,
+                actions: [
+                  h(
+                    'button',
+                    {
+                      type: 'button',
+                      className: 'wb-btn wb-btn-ghost wb-btn-sm',
+                      disabled: checkinBusy !== '',
+                      onClick: () => {
+                        void loadCheckin()
+                      },
+                    },
+                    checkinBusy !== '' ? tr('loading') : tr('refresh'),
+                  ),
+                ],
+                children: checkinBody,
               }),
               Card({
                 title: tr('secUsage'),
@@ -1740,6 +1965,7 @@ window.__ModuleLoader__.load({
         connection: ['M8.5 12h7', 'M6 8.5h-.5a3.5 3.5 0 0 0 0 7H6', 'M18 15.5h.5a3.5 3.5 0 0 0 0-7H18'],
         models: ['M4.5 7.5 12 4l7.5 3.5v9L12 20l-7.5-3.5z', 'M4.5 7.5 12 11l7.5-3.5', 'M12 11v9'],
         usage: ['M4.5 19.5h15', 'M7 19.5V13', 'M12 19.5V7', 'M17 19.5v-4.5'],
+        streak: ['M5 6.5h14v13.5H5z', 'M5 10.5h14', 'M8.5 4.5v3.5', 'M15.5 4.5v3.5', 'M9.2 15.4l2 2 3.8-4.2'],
       }
       return h(
         'svg',

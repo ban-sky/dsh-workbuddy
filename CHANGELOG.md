@@ -1,5 +1,32 @@
 # Changelog
 
+## 0.11.0 — 2026-11-25
+
+- **Daily check-in.** A new card tracks WorkBuddy's 「连续登录」 streak: how many
+  days in a row, whether today already counted, the next tier, make-up cards,
+  and the three redeemable tiers (7 / 14 / 28 days). A day counts only after a
+  conversation completes — there is no check-in request to send — so the card
+  stays honest about that instead of showing a fake "sign in" button.
+  New `lib/growth.js` wraps `GET activity/growth/streak`,
+  `GET activity/growth/heatmap`, and `POST activity/growth/redeem`, with the
+  `growth` and `redeemGrowth` route actions. Redeeming re-reads the tier first
+  and rejects a locked or already-redeemed tier locally, so a stale panel can
+  never spend a chance; each write carries a one-shot `client_token` UUID.
+  Dates are resolved in the activity's own timezone (Asia/Shanghai), because a
+  viewer's local midnight would otherwise shift "today" by a day.
+- **DSH Go support.** The plugin now also renders inside the DSH Go phone app:
+  a WorkBuddy panel (account, credits, local usage, streak) plus a composer
+  status pill. `lib/dsh-go.js` builds the app's declarative v2 view document
+  and its data object; `package.json` declares the `dshGo` contributions. The
+  host half registers through `ctx.inject(['dshGo'])`, so hosts without the
+  bridge keep working untouched.
+- **DSH 0.2.2 compatibility.** Peers widened to `^0.2.1-rc.5`, `engines.dsh`
+  declares `>=0.2.1-rc.5 <0.3.0-0`, and the pi-ai profile now supplies
+  `maxRequestImages` and `imageOffloadCountQuantum` (0.2.2 validates the
+  latter against the former; 0.2.1 ignores both).
+- 156 tests (was 132): 13 for the growth client, 8 for the DSH Go view, 3 for
+  the new route actions.
+
 ## 0.10.0 — 2026-11-23
 
 - **Claimable welfare credits.** The accounts card now lists the two official
